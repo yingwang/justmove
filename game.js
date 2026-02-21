@@ -57,6 +57,21 @@ let poseMatchScore = 0;
 let audioNodes = {};
 let songDuration = 0;
 
+// Visual effects state
+let particles = [];
+let lastRatingTime = 0;
+let lastRating = '';
+let beatPulse = 0;
+let currentSongBpm = 120;
+
+// Neon color palette based on match quality
+const NEON_COLORS = {
+  idle: { r: 0, g: 200, b: 255 },     // cyan
+  good: { r: 0, g: 255, b: 136 },      // green
+  perfect: { r: 255, g: 215, b: 0 },   // gold
+  miss: { r: 255, g: 51, b: 102 },     // pink
+};
+
 // ===== Pose Definitions =====
 // Each pose is defined by expected angles/positions of key body parts
 const POSES = {
@@ -356,65 +371,63 @@ function drawStickFigure(ctx, w, h, opts = {}) {
   if (opts.leanRight) bodyTilt = 0.04;
 
   const cx = 0.5 + bodyTilt;
-
-  ctx.strokeStyle = '#00c8ff';
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.fillStyle = '#00c8ff';
-
-  // Head
-  ctx.beginPath();
-  ctx.arc(cx * w, headY * h, 12, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Spine
-  ctx.beginPath();
-  ctx.moveTo(cx * w, (headY + 0.06) * h);
-  ctx.lineTo((cx + bodyTilt) * w, hipY * h);
-  ctx.stroke();
-
-  // Shoulders
   const lShoulderX = cx - 0.12 + bodyTilt;
   const rShoulderX = cx + 0.12 + bodyTilt;
-  ctx.beginPath();
-  ctx.moveTo(lShoulderX * w, shoulderY * h);
-  ctx.lineTo(rShoulderX * w, shoulderY * h);
-  ctx.stroke();
-
-  // Left arm
-  if (opts.lArm) {
-    ctx.beginPath();
-    ctx.moveTo(lShoulderX * w, shoulderY * h);
-    ctx.lineTo(opts.lArm[0].x * w, opts.lArm[0].y * h);
-    ctx.lineTo(opts.lArm[1].x * w, opts.lArm[1].y * h);
-    ctx.stroke();
-  }
-
-  // Right arm
-  if (opts.rArm) {
-    ctx.beginPath();
-    ctx.moveTo(rShoulderX * w, shoulderY * h);
-    ctx.lineTo(opts.rArm[0].x * w, opts.rArm[0].y * h);
-    ctx.lineTo(opts.rArm[1].x * w, opts.rArm[1].y * h);
-    ctx.stroke();
-  }
-
-  // Legs
   const kneeY = opts.squat ? 0.7 : 0.75;
   const footY = opts.squat ? 0.85 : 0.92;
   const legSpread = opts.squat ? 0.12 : 0.08;
 
-  ctx.beginPath();
-  ctx.moveTo((cx + bodyTilt) * w, hipY * h);
-  ctx.lineTo((cx - legSpread + bodyTilt) * w, kneeY * h);
-  ctx.lineTo((cx - legSpread + bodyTilt) * w, footY * h);
-  ctx.stroke();
+  // Animate glow
+  const pulse = 0.7 + 0.3 * Math.sin(performance.now() * 0.004);
+  const color = { r: 0, g: 200, b: 255 };
 
-  ctx.beginPath();
-  ctx.moveTo((cx + bodyTilt) * w, hipY * h);
-  ctx.lineTo((cx + legSpread + bodyTilt) * w, kneeY * h);
-  ctx.lineTo((cx + legSpread + bodyTilt) * w, footY * h);
-  ctx.stroke();
+  function glowLine(x1, y1, x2, y2, width) {
+    // Outer glow
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${0.15 * pulse})`;
+    ctx.lineWidth = width * 2.5; ctx.lineCap = 'round'; ctx.stroke();
+    // Body
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.8)`;
+    ctx.lineWidth = width; ctx.stroke();
+    // Bright core
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.35 * pulse})`;
+    ctx.lineWidth = width * 0.35; ctx.stroke();
+  }
+
+  // Head glow
+  const headGrad = ctx.createRadialGradient(cx * w, headY * h, 0, cx * w, headY * h, 18);
+  headGrad.addColorStop(0, `rgba(255, 255, 255, ${0.4 * pulse})`);
+  headGrad.addColorStop(0.35, `rgba(${color.r}, ${color.g}, ${color.b}, 0.6)`);
+  headGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = headGrad;
+  ctx.beginPath(); ctx.arc(cx * w, headY * h, 18, 0, Math.PI * 2); ctx.fill();
+
+  // Spine
+  glowLine(cx * w, (headY + 0.06) * h, (cx + bodyTilt) * w, hipY * h, 8);
+
+  // Shoulders
+  glowLine(lShoulderX * w, shoulderY * h, rShoulderX * w, shoulderY * h, 8);
+
+  // Arms
+  if (opts.lArm) {
+    glowLine(lShoulderX * w, shoulderY * h, opts.lArm[0].x * w, opts.lArm[0].y * h, 7);
+    glowLine(opts.lArm[0].x * w, opts.lArm[0].y * h, opts.lArm[1].x * w, opts.lArm[1].y * h, 6);
+  }
+  if (opts.rArm) {
+    glowLine(rShoulderX * w, shoulderY * h, opts.rArm[0].x * w, opts.rArm[0].y * h, 7);
+    glowLine(opts.rArm[0].x * w, opts.rArm[0].y * h, opts.rArm[1].x * w, opts.rArm[1].y * h, 6);
+  }
+
+  // Legs
+  glowLine((cx + bodyTilt) * w, hipY * h, (cx - legSpread + bodyTilt) * w, kneeY * h, 8);
+  glowLine((cx - legSpread + bodyTilt) * w, kneeY * h, (cx - legSpread + bodyTilt) * w, footY * h, 7);
+  glowLine((cx + bodyTilt) * w, hipY * h, (cx + legSpread + bodyTilt) * w, kneeY * h, 8);
+  glowLine((cx + legSpread + bodyTilt) * w, kneeY * h, (cx + legSpread + bodyTilt) * w, footY * h, 7);
 }
 
 // ===== Song / Beat Map Definitions =====
@@ -1047,39 +1060,169 @@ async function initMediaPipe() {
 }
 
 function onPoseResults(results) {
-  // Resize canvases
   poseCanvas.width = webcam.videoWidth || 1280;
   poseCanvas.height = webcam.videoHeight || 720;
+  const w = poseCanvas.width;
+  const h = poseCanvas.height;
 
-  poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
+  poseCtx.clearRect(0, 0, w, h);
 
   if (results.poseLandmarks) {
     currentPoseLandmarks = results.poseLandmarks;
-
-    // Draw skeleton on pose canvas
-    drawConnectors(poseCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-      color: 'rgba(0, 200, 255, 0.5)',
-      lineWidth: 3,
-    });
-    drawLandmarks(poseCtx, results.poseLandmarks, {
-      color: 'rgba(0, 255, 136, 0.7)',
-      lineWidth: 1,
-      radius: 3,
-    });
+    drawNeonBody(poseCtx, results.poseLandmarks, w, h);
   }
 
-  // Also draw hand landmarks for visual flair
   if (results.leftHandLandmarks) {
-    drawConnectors(poseCtx, results.leftHandLandmarks, HAND_CONNECTIONS, {
-      color: 'rgba(255, 200, 0, 0.3)',
-      lineWidth: 1,
-    });
+    drawNeonHand(poseCtx, results.leftHandLandmarks, w, h);
   }
   if (results.rightHandLandmarks) {
-    drawConnectors(poseCtx, results.rightHandLandmarks, HAND_CONNECTIONS, {
-      color: 'rgba(255, 200, 0, 0.3)',
-      lineWidth: 1,
-    });
+    drawNeonHand(poseCtx, results.rightHandLandmarks, w, h);
+  }
+}
+
+// --- Neon body rendering (Just Dance style) ---
+const BODY_SEGMENTS = [
+  // Torso
+  [11, 12], [11, 23], [12, 24], [23, 24],
+  // Left arm
+  [11, 13], [13, 15],
+  // Right arm
+  [12, 14], [14, 16],
+  // Left leg
+  [23, 25], [25, 27],
+  // Right leg
+  [24, 26], [26, 28],
+];
+
+const LIMB_WIDTHS = {
+  '11-12': 18, '11-23': 16, '12-24': 16, '23-24': 16, // torso
+  '11-13': 14, '13-15': 12, // left arm
+  '12-14': 14, '14-16': 12, // right arm
+  '23-25': 16, '25-27': 14, // left leg
+  '24-26': 16, '26-28': 14, // right leg
+};
+
+function getNeonColor() {
+  if (poseMatchScore >= 0.8) return NEON_COLORS.perfect;
+  if (poseMatchScore >= 0.5) return NEON_COLORS.good;
+  if (gameState === 'playing' && poseMatchScore < 0.2 && activePose) return NEON_COLORS.miss;
+  return NEON_COLORS.idle;
+}
+
+function drawNeonLimb(ctx, x1, y1, x2, y2, width, color, glowIntensity) {
+  const r = color.r, g = color.g, b = color.b;
+
+  // Outer glow
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Soft wide glow
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.1 * glowIntensity})`;
+  ctx.lineWidth = width * 3;
+  ctx.stroke();
+
+  // Medium glow
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.25 * glowIntensity})`;
+  ctx.lineWidth = width * 1.8;
+  ctx.stroke();
+
+  // Core body
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
+  ctx.lineWidth = width;
+  ctx.stroke();
+
+  // Bright center
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 * glowIntensity})`;
+  ctx.lineWidth = width * 0.4;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawNeonJoint(ctx, x, y, radius, color, glowIntensity) {
+  const r = color.r, g = color.g, b = color.b;
+  // Glow
+  const grad = ctx.createRadialGradient(x, y, 0, x, y, radius * 2.5);
+  grad.addColorStop(0, `rgba(255, 255, 255, ${0.5 * glowIntensity})`);
+  grad.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, ${0.6 * glowIntensity})`);
+  grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, radius * 2.5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawNeonBody(ctx, landmarks, w, h) {
+  const color = getNeonColor();
+  const pulse = gameState === 'playing' ? 0.8 + 0.2 * Math.sin(performance.now() * 0.005) : 1;
+  const glowIntensity = gameState === 'playing' ? (0.7 + poseMatchScore * 0.3) * pulse : 0.8;
+
+  // Draw limb segments
+  for (const [i, j] of BODY_SEGMENTS) {
+    const a = landmarks[i];
+    const b = landmarks[j];
+    if (!a || !b || a.visibility < 0.5 || b.visibility < 0.5) continue;
+    const key = `${Math.min(i, j)}-${Math.max(i, j)}`;
+    const baseWidth = LIMB_WIDTHS[key] || 12;
+    drawNeonLimb(ctx, a.x * w, a.y * h, b.x * w, b.y * h, baseWidth, color, glowIntensity);
+  }
+
+  // Draw joints at key points
+  const jointIndices = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+  for (const i of jointIndices) {
+    const lm = landmarks[i];
+    if (!lm || lm.visibility < 0.5) continue;
+    drawNeonJoint(ctx, lm.x * w, lm.y * h, 6, color, glowIntensity);
+  }
+
+  // Head glow (larger, special)
+  const nose = landmarks[0];
+  if (nose && nose.visibility > 0.5) {
+    const headRadius = 28;
+    const grad = ctx.createRadialGradient(nose.x * w, nose.y * h, 0, nose.x * w, nose.y * h, headRadius * 2);
+    grad.addColorStop(0, `rgba(255, 255, 255, ${0.35 * glowIntensity})`);
+    grad.addColorStop(0.25, `rgba(${color.r}, ${color.g}, ${color.b}, ${0.5 * glowIntensity})`);
+    grad.addColorStop(0.6, `rgba(${color.r}, ${color.g}, ${color.b}, ${0.15 * glowIntensity})`);
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(nose.x * w, nose.y * h, headRadius * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Solid head core
+    ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.7)`;
+    ctx.beginPath();
+    ctx.arc(nose.x * w, nose.y * h, headRadius * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawNeonHand(ctx, landmarks, w, h) {
+  const color = getNeonColor();
+  // Draw simplified hand glow at wrist
+  if (landmarks[0]) {
+    const x = landmarks[0].x * w;
+    const y = landmarks[0].y * h;
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, 20);
+    grad.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0.5)`);
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, 20, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
@@ -1112,6 +1255,8 @@ function startGame() {
   const song = SONGS[selectedSong];
   beatMap = song.generateBeats();
   songDuration = song.duration;
+  currentSongBpm = song.bpm;
+  particles = [];
 
   // Create match meter
   createMatchMeter();
@@ -1285,14 +1430,33 @@ function scoreBeat(beat, rating) {
   playHitSound(rating);
   showRating(rating);
   updateHUD();
+
+  // Spawn particles on hit
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight / 2;
+  if (rating === 'perfect') {
+    spawnParticles(cx, cy, 25, NEON_COLORS.perfect, 8, 1.2);
+  } else if (rating === 'great') {
+    spawnParticles(cx, cy, 15, NEON_COLORS.good, 6, 1.0);
+  } else if (rating === 'good') {
+    spawnParticles(cx, cy, 8, NEON_COLORS.idle, 4, 0.8);
+  } else {
+    spawnParticles(cx, cy, 6, NEON_COLORS.miss, 3, 0.6);
+  }
 }
 
 function showRating(rating) {
+  lastRatingTime = performance.now();
+  lastRating = rating;
   ratingPopup.textContent = rating.toUpperCase();
   ratingPopup.className = `show ${rating}`;
+  // Add extra text for streaks
+  if (combo >= 20 && rating !== 'miss') {
+    ratingPopup.textContent = rating.toUpperCase() + ' \u2605';
+  }
   setTimeout(() => {
     ratingPopup.className = '';
-  }, 600);
+  }, 700);
 }
 
 function updateHUD() {
@@ -1342,51 +1506,138 @@ function renderBeatTimeline(elapsed) {
 }
 
 function renderGameEffects(elapsed) {
-  gameCanvas.width = window.innerWidth;
-  gameCanvas.height = window.innerHeight;
-  gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+  const cw = gameCanvas.width = window.innerWidth;
+  const ch = gameCanvas.height = window.innerHeight;
+  gameCtx.clearRect(0, 0, cw, ch);
 
-  // Vignette effect based on combo
-  if (combo > 0) {
-    const intensity = Math.min(0.3, combo * 0.02);
-    const gradient = gameCtx.createRadialGradient(
-      gameCanvas.width / 2, gameCanvas.height / 2,
-      gameCanvas.width * 0.3,
-      gameCanvas.width / 2, gameCanvas.height / 2,
-      gameCanvas.width * 0.7
-    );
-    gradient.addColorStop(0, 'transparent');
-    gradient.addColorStop(1, `rgba(0, 200, 255, ${intensity})`);
-    gameCtx.fillStyle = gradient;
-    gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+  // --- Beat pulse (background throbs with music) ---
+  const beatInterval = 60 / currentSongBpm;
+  const beatPhase = (elapsed % beatInterval) / beatInterval;
+  beatPulse = Math.max(0, 1 - beatPhase * 3); // sharp attack, slow decay
+
+  // Dark vignette (always on, stronger with combo)
+  const vignetteStrength = 0.15 + Math.min(0.25, combo * 0.015);
+  const vig = gameCtx.createRadialGradient(cw / 2, ch / 2, cw * 0.2, cw / 2, ch / 2, cw * 0.75);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, `rgba(0, 0, 20, ${vignetteStrength})`);
+  gameCtx.fillStyle = vig;
+  gameCtx.fillRect(0, 0, cw, ch);
+
+  // Beat pulse flash
+  if (beatPulse > 0.1) {
+    const color = getNeonColor();
+    gameCtx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${beatPulse * 0.06})`;
+    gameCtx.fillRect(0, 0, cw, ch);
   }
 
-  // Flash on high match
-  if (poseMatchScore > 0.7) {
-    const flash = (poseMatchScore - 0.7) / 0.3;
-    gameCtx.fillStyle = `rgba(0, 255, 136, ${flash * 0.08})`;
-    gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+  // Performance glow (match quality -> screen tint)
+  if (poseMatchScore > 0.5 && gameState === 'playing') {
+    const intensity = (poseMatchScore - 0.5) * 0.12;
+    const color = poseMatchScore >= 0.8 ? NEON_COLORS.perfect : NEON_COLORS.good;
+    gameCtx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`;
+    gameCtx.fillRect(0, 0, cw, ch);
   }
 
-  // Particle effects for combo milestones
-  if (combo > 0 && combo % 10 === 0) {
-    drawComboParticles(gameCtx, elapsed);
+  // --- Particle system ---
+  updateAndDrawParticles(gameCtx, cw, ch, elapsed);
+
+  // --- Edge glow lines (pulsing borders like a dance floor) ---
+  if (combo >= 5) {
+    const edgeAlpha = Math.min(0.5, combo * 0.02) * (0.6 + 0.4 * beatPulse);
+    const color = getNeonColor();
+    gameCtx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${edgeAlpha})`;
+    gameCtx.lineWidth = 3;
+    // Bottom edge glow
+    const edgeGrad = gameCtx.createLinearGradient(0, ch - 80, 0, ch);
+    edgeGrad.addColorStop(0, 'transparent');
+    edgeGrad.addColorStop(1, `rgba(${color.r}, ${color.g}, ${color.b}, ${edgeAlpha * 0.3})`);
+    gameCtx.fillStyle = edgeGrad;
+    gameCtx.fillRect(0, ch - 80, cw, 80);
+    // Top edge
+    const topGrad = gameCtx.createLinearGradient(0, 0, 0, 60);
+    topGrad.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, ${edgeAlpha * 0.2})`);
+    topGrad.addColorStop(1, 'transparent');
+    gameCtx.fillStyle = topGrad;
+    gameCtx.fillRect(0, 0, cw, 60);
+  }
+
+  // --- Combo fire effect (side streaks) ---
+  if (combo >= 10) {
+    drawComboFire(gameCtx, cw, ch, elapsed);
   }
 }
 
-function drawComboParticles(ctx, elapsed) {
-  const time = (elapsed * 3) % 1;
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 + elapsed;
-    const radius = 50 + time * 100;
-    const x = ctx.canvas.width / 2 + Math.cos(angle) * radius;
-    const y = ctx.canvas.height / 2 + Math.sin(angle) * radius;
-    const alpha = 1 - time;
+// --- Particle system ---
+function spawnParticles(x, y, count, color, speed, life) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const vel = speed * (0.5 + Math.random() * 0.5);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * vel,
+      vy: Math.sin(angle) * vel - speed * 0.3,
+      life: life || 1,
+      maxLife: life || 1,
+      r: color.r, g: color.g, b: color.b,
+      size: 2 + Math.random() * 4,
+    });
+  }
+}
 
+function updateAndDrawParticles(ctx, cw, ch) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.15; // gravity
+    p.life -= 0.016;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+    const alpha = (p.life / p.maxLife);
+    const size = p.size * alpha;
+
+    // Glow
+    const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 3);
+    grad.addColorStop(0, `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha * 0.6})`);
+    grad.addColorStop(1, `rgba(${p.r}, ${p.g}, ${p.b}, 0)`);
+    ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+    ctx.arc(p.x, p.y, size * 3, 0, Math.PI * 2);
     ctx.fill();
+
+    // Core
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, size * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawComboFire(ctx, cw, ch, elapsed) {
+  const fireIntensity = Math.min(1, (combo - 10) / 30);
+  const color = getNeonColor();
+  const time = elapsed * 2;
+
+  // Animated streaks on left and right edges
+  for (let i = 0; i < 6; i++) {
+    const phase = (time + i * 0.7) % 3;
+    const yBase = ch * (0.3 + i * 0.1);
+    const y = yBase - phase * ch * 0.15;
+    const alpha = fireIntensity * 0.3 * (1 - phase / 3);
+
+    // Left streak
+    const leftGrad = ctx.createLinearGradient(0, y, 60, y);
+    leftGrad.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`);
+    leftGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = leftGrad;
+    ctx.fillRect(0, y - 15, 60, 30);
+
+    // Right streak
+    const rightGrad = ctx.createLinearGradient(cw, y, cw - 60, y);
+    rightGrad.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`);
+    rightGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = rightGrad;
+    ctx.fillRect(cw - 60, y - 15, 60, 30);
   }
 }
 
