@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JustMove - Rhythm Dance Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Start Screen -->
+  <div id="start-screen" class="screen active">
+    <div class="title-container">
+      <h1>JUST<span class="accent">MOVE</span></h1>
+      <p class="subtitle">A Motion-Tracking Rhythm Game</p>
+    </div>
+    <div class="start-content">
+      <div class="camera-prompt">
+        <p>This game uses your camera to track your movements.</p>
+        <p>Stand back so your full body is visible!</p>
+      </div>
+      <div class="song-select">
+        <h2>Select a Song</h2>
+        <div class="song-list">
+          <button class="song-btn selected" data-song="electric-dreams">
+            <span class="song-name">Electric Dreams</span>
+            <span class="song-bpm">120 BPM</span>
+            <span class="song-difficulty">Easy</span>
+          </button>
+          <button class="song-btn" data-song="neon-nights">
+            <span class="song-name">Neon Nights</span>
+            <span class="song-bpm">140 BPM</span>
+            <span class="song-difficulty">Medium</span>
+          </button>
+          <button class="song-btn" data-song="cyber-funk">
+            <span class="song-name">Cyber Funk</span>
+            <span class="song-bpm">160 BPM</span>
+            <span class="song-difficulty">Hard</span>
+          </button>
+        </div>
+      </div>
+      <button id="start-btn" class="btn-primary">START GAME</button>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="game-screen" class="screen">
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="pose-canvas"></canvas>
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hud-left">
+        <div id="score-display">
+          <span class="label">SCORE</span>
+          <span id="score-value">0</span>
+        </div>
+        <div id="combo-display">
+          <span class="label">COMBO</span>
+          <span id="combo-value">0</span>
+        </div>
+      </div>
+      <div class="hud-center">
+        <div id="rating-popup"></div>
+        <div id="song-progress">
+          <div id="progress-bar"></div>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div id="multiplier-display">
+          <span class="label">MULTIPLIER</span>
+          <span id="multiplier-value">x1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Countdown -->
+    <div id="countdown" class="hidden">
+      <span id="countdown-number">3</span>
+    </div>
+
+    <!-- Pose Target Display -->
+    <div id="pose-target-container">
+      <canvas id="target-pose-canvas"></canvas>
+      <div id="pose-name"></div>
+    </div>
+
+    <!-- Beat Timeline -->
+    <div id="beat-timeline">
+      <div id="beat-hit-zone"></div>
+      <div id="beat-markers"></div>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div id="results-screen" class="screen">
+    <div class="results-container">
+      <h1>RESULTS</h1>
+      <div id="final-grade"></div>
+      <div class="results-stats">
+        <div class="stat">
+          <span class="stat-label">Final Score</span>
+          <span id="final-score" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Max Combo</span>
+          <span id="final-combo" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Perfect</span>
+          <span id="final-perfect" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Great</span>
+          <span id="final-great" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Good</span>
+          <span id="final-good" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Miss</span>
+          <span id="final-miss" class="stat-value">0</span>
+        </div>
+      </div>
+      <div class="results-buttons">
+        <button id="retry-btn" class="btn-primary">PLAY AGAIN</button>
+        <button id="menu-btn" class="btn-secondary">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="hidden">
+    <div class="loader"></div>
+    <p id="loading-text">Loading MediaPipe...</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/holistic.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1675466124/drawing_utils.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
