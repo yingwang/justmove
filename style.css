@@ -89,23 +89,25 @@ body {
 }
 
 .song-list {
-  display: flex;
-  gap: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  max-width: 680px;
 }
 
 .song-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  padding: 1rem 1.5rem;
+  gap: 0.2rem;
+  padding: 0.7rem 0.8rem;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: #ccc;
   cursor: pointer;
   transition: all 0.3s;
-  min-width: 150px;
+  min-width: 140px;
 }
 
 .song-btn:hover {
@@ -129,12 +131,25 @@ body {
   color: #00c8ff;
 }
 
+.song-style {
+  font-size: 0.7rem;
+  color: #999;
+  font-style: italic;
+}
+
 .song-difficulty {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
   color: #888;
 }
+
+.song-difficulty.easy { color: #00ff88; background: rgba(0, 255, 136, 0.1); }
+.song-difficulty.medium { color: #ffc800; background: rgba(255, 200, 0, 0.1); }
+.song-difficulty.hard { color: #ff3366; background: rgba(255, 51, 102, 0.1); }
 
 /* Buttons */
 .btn-primary {
@@ -616,7 +631,8 @@ body {
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
   .title-container h1 { font-size: 3rem; }
-  .song-list { flex-direction: column; }
+  .song-list { grid-template-columns: repeat(2, 1fr); max-width: 340px; }
+  .song-btn { min-width: 0; }
   #pose-target-container { width: 120px; height: 160px; right: 10px; bottom: 80px; }
   #beat-timeline { width: 90%; }
   .results-stats { grid-template-columns: repeat(2, 1fr); }

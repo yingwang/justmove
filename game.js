@@ -424,27 +424,64 @@ const SONGS = {
     bpm: 120,
     duration: 60,
     difficulty: 'easy',
-    generateBeats() {
-      return generateBeatMap(120, 60, 'easy');
-    },
+    style: 'synthpop',
+    generateBeats() { return generateBeatMap(120, 60, 'easy'); },
   },
   'neon-nights': {
     name: 'Neon Nights',
     bpm: 140,
     duration: 60,
     difficulty: 'medium',
-    generateBeats() {
-      return generateBeatMap(140, 60, 'medium');
-    },
+    style: 'edm',
+    generateBeats() { return generateBeatMap(140, 60, 'medium'); },
   },
   'cyber-funk': {
     name: 'Cyber Funk',
     bpm: 160,
     duration: 60,
     difficulty: 'hard',
-    generateBeats() {
-      return generateBeatMap(160, 60, 'hard');
-    },
+    style: 'dnb',
+    generateBeats() { return generateBeatMap(160, 60, 'hard'); },
+  },
+  'sunset-groove': {
+    name: 'Sunset Groove',
+    bpm: 100,
+    duration: 60,
+    difficulty: 'easy',
+    style: 'lofi',
+    generateBeats() { return generateBeatMap(100, 60, 'easy'); },
+  },
+  'tokyo-drift': {
+    name: 'Tokyo Drift',
+    bpm: 128,
+    duration: 60,
+    difficulty: 'medium',
+    style: 'future-bass',
+    generateBeats() { return generateBeatMap(128, 60, 'medium'); },
+  },
+  'disco-inferno': {
+    name: 'Disco Inferno',
+    bpm: 115,
+    duration: 60,
+    difficulty: 'easy',
+    style: 'disco',
+    generateBeats() { return generateBeatMap(115, 60, 'easy'); },
+  },
+  'dark-matter': {
+    name: 'Dark Matter',
+    bpm: 150,
+    duration: 60,
+    difficulty: 'hard',
+    style: 'darksynth',
+    generateBeats() { return generateBeatMap(150, 60, 'hard'); },
+  },
+  'tropical-heat': {
+    name: 'Tropical Heat',
+    bpm: 110,
+    duration: 60,
+    difficulty: 'medium',
+    style: 'reggaeton',
+    generateBeats() { return generateBeatMap(110, 60, 'medium'); },
   },
 };
 
@@ -484,124 +521,446 @@ function createAudioContext() {
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
 }
 
-function playSynthSong(bpm, duration) {
+// --- Shared synth helpers ---
+function synthKick(ctx, master, now, t, pitch, vol) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(pitch || 150, now + t);
+  osc.frequency.exponentialRampToValueAtTime(30, now + t + 0.1);
+  gain.gain.setValueAtTime(vol || 0.4, now + t);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + t + 0.15);
+  osc.connect(gain); gain.connect(master);
+  osc.start(now + t); osc.stop(now + t + 0.2);
+}
+
+function synthHihat(ctx, master, now, t, vol, decay) {
+  const bufLen = ctx.sampleRate * (decay || 0.03);
+  const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1) * 0.3;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filt = ctx.createBiquadFilter(); filt.type = 'highpass'; filt.frequency.value = 8000;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(vol || 0.08, now + t);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + t + (decay || 0.05));
+  src.connect(filt); filt.connect(gain); gain.connect(master);
+  src.start(now + t); src.stop(now + t + (decay || 0.05) + 0.01);
+}
+
+function synthSnare(ctx, master, now, t, vol) {
+  // Tonal body
+  const osc = ctx.createOscillator();
+  const oscGain = ctx.createGain();
+  osc.type = 'triangle'; osc.frequency.value = 200;
+  oscGain.gain.setValueAtTime((vol || 0.2) * 0.6, now + t);
+  oscGain.gain.exponentialRampToValueAtTime(0.01, now + t + 0.08);
+  osc.connect(oscGain); oscGain.connect(master);
+  osc.start(now + t); osc.stop(now + t + 0.1);
+  // Noise
+  const bufLen = ctx.sampleRate * 0.08;
+  const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1);
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filt = ctx.createBiquadFilter(); filt.type = 'highpass'; filt.frequency.value = 3000;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(vol || 0.2, now + t);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + t + 0.1);
+  src.connect(filt); filt.connect(gain); gain.connect(master);
+  src.start(now + t); src.stop(now + t + 0.12);
+}
+
+function synthClap(ctx, master, now, t, vol) {
+  const bufLen = ctx.sampleRate * 0.06;
+  const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1);
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2500; bp.Q.value = 1.5;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(vol || 0.25, now + t);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + t + 0.08);
+  src.connect(bp); bp.connect(gain); gain.connect(master);
+  src.start(now + t); src.stop(now + t + 0.1);
+}
+
+function synthNote(ctx, master, now, t, freq, dur, type, vol) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol || 0.06, now + t);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + t + dur * 0.85);
+  osc.connect(gain); gain.connect(master);
+  osc.start(now + t); osc.stop(now + t + dur);
+}
+
+function synthChord(ctx, master, now, t, freqs, dur, type, vol) {
+  freqs.forEach((f) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'triangle';
+    osc.frequency.value = f;
+    gain.gain.setValueAtTime(vol || 0.04, now + t);
+    gain.gain.setValueAtTime(vol || 0.04, now + t + dur * 0.7);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + t + dur * 0.95);
+    osc.connect(gain); gain.connect(master);
+    osc.start(now + t); osc.stop(now + t + dur);
+  });
+}
+
+function synthBass(ctx, master, now, t, freq, dur, type, vol) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'sawtooth';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol || 0.15, now + t);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + t + dur * 0.8);
+  osc.connect(gain); gain.connect(master);
+  osc.start(now + t); osc.stop(now + t + dur * 0.9);
+}
+
+// --- Per-style synthesizers ---
+
+function playSynthpop(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  const bassNotes = [65.41, 82.41, 73.42, 87.31];
+  const melodyNotes = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25];
+  const chords = [[261.63, 329.63, 392.0], [220.0, 277.18, 329.63], [293.66, 369.99, 440.0], [246.94, 311.13, 369.99]];
+
+  for (let t = 0; t < dur; t += b) {
+    const bi = Math.floor(t / b);
+    synthBass(ctx, master, now, t, bassNotes[bi % bassNotes.length], b);
+    synthKick(ctx, master, now, t);
+  }
+  for (let t = 0; t < dur; t += b / 2) synthHihat(ctx, master, now, t);
+  let mt = 0;
+  while (mt < dur) {
+    const nd = b * (Math.random() > 0.5 ? 1 : 0.5);
+    synthNote(ctx, master, now, mt, melodyNotes[Math.floor(Math.random() * melodyNotes.length)], nd, 'square', 0.06);
+    mt += nd;
+  }
+  let ct = 0, ci = 0;
+  while (ct < dur) { synthChord(ctx, master, now, ct, chords[ci % chords.length], b * 4); ct += b * 4; ci++; }
+}
+
+function playEdm(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  const bassNotes = [55.0, 61.74, 73.42, 65.41]; // A1, B1, D2, C2
+  const leadNotes = [440.0, 493.88, 523.25, 587.33, 659.25, 783.99, 880.0];
+  const chords = [[440.0, 554.37, 659.25], [349.23, 440.0, 523.25], [493.88, 622.25, 739.99], [523.25, 659.25, 783.99]];
+
+  // Four-on-the-floor with sidechain feel
+  for (let t = 0; t < dur; t += b) {
+    synthKick(ctx, master, now, t, 160, 0.45);
+    synthBass(ctx, master, now, t, bassNotes[Math.floor(t / (b * 4)) % bassNotes.length], b * 0.7, 'sawtooth', 0.12);
+  }
+  // Offbeat hi-hats
+  for (let t = b / 2; t < dur; t += b) synthHihat(ctx, master, now, t, 0.06);
+  // Clap on 2 and 4
+  for (let t = b; t < dur; t += b * 2) synthClap(ctx, master, now, t, 0.2);
+  // Arpeggiated lead
+  let lt = 0;
+  while (lt < dur) {
+    const ci = Math.floor(lt / (b * 4)) % chords.length;
+    const arpNotes = chords[ci];
+    for (let a = 0; a < 4 && lt < dur; a++) {
+      synthNote(ctx, master, now, lt, arpNotes[a % arpNotes.length] * (a >= 3 ? 2 : 1), b * 0.4, 'sawtooth', 0.05);
+      lt += b;
+    }
+  }
+  // Supersaw chords every 4 beats
+  let ct = 0, ci = 0;
+  while (ct < dur) {
+    synthChord(ctx, master, now, ct, chords[ci % chords.length], b * 3.5, 'sawtooth', 0.025);
+    ct += b * 4; ci++;
+  }
+}
+
+function playDnb(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  const bassNotes = [55.0, 58.27, 65.41, 73.42]; // A1, Bb1, C2, D2
+  const leadNotes = [523.25, 587.33, 622.25, 698.46, 783.99, 880.0, 932.33];
+
+  // Two-step breakbeat pattern
+  for (let bar = 0; bar < dur; bar += b * 4) {
+    synthKick(ctx, master, now, bar, 170, 0.5);
+    synthSnare(ctx, master, now, bar + b * 1.5, 0.3);
+    synthKick(ctx, master, now, bar + b * 2.5, 170, 0.4);
+    synthSnare(ctx, master, now, bar + b * 3, 0.25);
+  }
+  // Rapid hi-hats
+  for (let t = 0; t < dur; t += b / 4) synthHihat(ctx, master, now, t, 0.04, 0.02);
+  // Reese bass
+  for (let t = 0; t < dur; t += b * 2) {
+    const f = bassNotes[Math.floor(t / (b * 4)) % bassNotes.length];
+    synthBass(ctx, master, now, t, f, b * 1.8, 'sawtooth', 0.18);
+    // Detune layer for thickness
+    synthBass(ctx, master, now, t, f * 1.007, b * 1.8, 'sawtooth', 0.08);
+  }
+  // Staccato lead
+  let lt = 0;
+  while (lt < dur) {
+    const nd = b * (Math.random() > 0.6 ? 0.25 : 0.5);
+    synthNote(ctx, master, now, lt, leadNotes[Math.floor(Math.random() * leadNotes.length)], nd, 'square', 0.04);
+    lt += nd;
+  }
+}
+
+function playLofi(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  // Jazz-flavored chords: Cmaj7, Am7, Dm7, G7
+  const chords = [
+    [261.63, 329.63, 392.0, 493.88],
+    [220.0, 261.63, 329.63, 392.0],
+    [293.66, 349.23, 440.0, 523.25],
+    [196.0, 246.94, 293.66, 349.23],
+  ];
+  const bassNotes = [65.41, 55.0, 73.42, 49.0]; // C2, A1, D2, G1
+  const pentatonic = [261.63, 293.66, 329.63, 392.0, 440.0];
+
+  // Lazy kick + snare
+  for (let t = 0; t < dur; t += b) {
+    const bi = Math.floor(t / b) % 4;
+    if (bi === 0 || bi === 2) synthKick(ctx, master, now, t, 120, 0.3);
+    if (bi === 1 || bi === 3) synthSnare(ctx, master, now, t, 0.12);
+  }
+  // Soft hats
+  for (let t = 0; t < dur; t += b / 2) synthHihat(ctx, master, now, t, 0.03, 0.04);
+  // Warm bass
+  for (let t = 0; t < dur; t += b * 4) {
+    const ci = Math.floor(t / (b * 4)) % bassNotes.length;
+    for (let nb = 0; nb < 4; nb++) {
+      synthBass(ctx, master, now, t + nb * b, bassNotes[ci], b * 0.9, 'triangle', 0.12);
+    }
+  }
+  // Rhodes-like chords
+  let ct = 0, ci = 0;
+  while (ct < dur) {
+    synthChord(ctx, master, now, ct, chords[ci % chords.length], b * 3.8, 'triangle', 0.035);
+    ct += b * 4; ci++;
+  }
+  // Mellow melody with rests
+  let mt = 0;
+  while (mt < dur) {
+    if (Math.random() > 0.3) {
+      synthNote(ctx, master, now, mt, pentatonic[Math.floor(Math.random() * pentatonic.length)], b * 1.5, 'sine', 0.05);
+    }
+    mt += b * (Math.random() > 0.5 ? 2 : 1);
+  }
+}
+
+function playFutureBass(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  const chords = [
+    [349.23, 440.0, 523.25],   // F major
+    [392.0, 493.88, 587.33],   // G major
+    [440.0, 523.25, 659.25],   // A minor
+    [329.63, 415.30, 523.25],  // E major
+  ];
+  const bassNotes = [87.31, 98.0, 110.0, 82.41]; // F2, G2, A2, E2
+
+  // Punchy kick
+  for (let t = 0; t < dur; t += b) synthKick(ctx, master, now, t, 140, 0.4);
+  // Claps on 2 & 4
+  for (let t = b; t < dur; t += b * 2) synthClap(ctx, master, now, t, 0.25);
+  // Syncopated hats
+  for (let t = 0; t < dur; t += b / 2) {
+    const loud = (Math.floor(t / (b / 2)) % 3 === 0) ? 0.07 : 0.04;
+    synthHihat(ctx, master, now, t, loud, 0.03);
+  }
+  // Wobbly bass (pitch sweep)
+  for (let t = 0; t < dur; t += b * 2) {
+    const f = bassNotes[Math.floor(t / (b * 8)) % bassNotes.length];
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    osc.frequency.linearRampToValueAtTime(f * 1.5, now + t + b);
+    osc.frequency.linearRampToValueAtTime(f, now + t + b * 2);
+    gain.gain.setValueAtTime(0.14, now + t);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + t + b * 1.8);
+    osc.connect(gain); gain.connect(master);
+    osc.start(now + t); osc.stop(now + t + b * 2);
+  }
+  // Bright stab chords (the signature "future bass" chop)
+  let ct = 0, ci = 0;
+  while (ct < dur) {
+    const ch = chords[ci % chords.length];
+    // Rhythmic chops
+    synthChord(ctx, master, now, ct, ch, b * 0.4, 'sawtooth', 0.04);
+    synthChord(ctx, master, now, ct + b, ch, b * 0.3, 'sawtooth', 0.035);
+    synthChord(ctx, master, now, ct + b * 2.5, ch, b * 0.6, 'sawtooth', 0.04);
+    ct += b * 4; ci++;
+  }
+  // Sparkly lead
+  const leadNotes = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+  let lt = 0;
+  while (lt < dur) {
+    if (Math.random() > 0.25) {
+      synthNote(ctx, master, now, lt, leadNotes[Math.floor(Math.random() * leadNotes.length)], b * 0.3, 'sine', 0.04);
+    }
+    lt += b * 0.5;
+  }
+}
+
+function playDisco(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  const bassPattern = [130.81, 130.81, 164.81, 196.0]; // C3 C3 E3 G3
+  const chords = [
+    [261.63, 329.63, 392.0],  // C
+    [293.66, 349.23, 440.0],  // Dm
+    [329.63, 415.30, 493.88], // E
+    [220.0, 277.18, 329.63],  // Am
+  ];
+  const strings = [523.25, 659.25, 783.99]; // High string pad
+
+  // Four-on-the-floor disco kick
+  for (let t = 0; t < dur; t += b) synthKick(ctx, master, now, t, 130, 0.35);
+  // Open hi-hat on every offbeat
+  for (let t = b / 2; t < dur; t += b) synthHihat(ctx, master, now, t, 0.1, 0.08);
+  // Clap on 2 & 4
+  for (let t = b; t < dur; t += b * 2) synthClap(ctx, master, now, t, 0.18);
+  // Walking bass (octave bouncing)
+  for (let bar = 0; bar < dur; bar += b * 4) {
+    for (let nb = 0; nb < 4; nb++) {
+      const f = bassPattern[nb];
+      synthBass(ctx, master, now, bar + nb * b, f, b * 0.7, 'sawtooth', 0.14);
+      // Octave ghost note
+      if (nb % 2 === 0) synthBass(ctx, master, now, bar + nb * b + b * 0.5, f * 2, b * 0.3, 'triangle', 0.06);
+    }
+  }
+  // Funky rhythm guitar (staccato chords)
+  let ct = 0, ci = 0;
+  while (ct < dur) {
+    const ch = chords[ci % chords.length];
+    // 16th-note strums with gaps
+    for (let s = 0; s < 4; s++) {
+      const off = s * b;
+      synthChord(ctx, master, now, ct + off, ch, b * 0.2, 'square', 0.025);
+      if (s !== 2) synthChord(ctx, master, now, ct + off + b * 0.5, ch, b * 0.15, 'square', 0.02);
+    }
+    ct += b * 4; ci++;
+  }
+  // String pad
+  let st = 0;
+  while (st < dur) {
+    synthChord(ctx, master, now, st, strings, b * 8, 'sine', 0.03);
+    st += b * 8;
+  }
+}
+
+function playDarksynth(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  const bassNotes = [55.0, 51.91, 58.27, 48.99]; // A1, Ab1, Bb1, G1
+  const leadNotes = [440.0, 466.16, 523.25, 554.37, 622.25, 659.25, 739.99];
+  const chords = [
+    [220.0, 261.63, 329.63],   // Am
+    [207.65, 261.63, 311.13],  // Ab aug
+    [233.08, 277.18, 349.23],  // Bb
+    [196.0, 246.94, 293.66],   // Gm
+  ];
+
+  // Heavy kick
+  for (let t = 0; t < dur; t += b) synthKick(ctx, master, now, t, 180, 0.5);
+  // Distorted snare on 2 & 4
+  for (let t = b; t < dur; t += b * 2) { synthSnare(ctx, master, now, t, 0.35); synthClap(ctx, master, now, t, 0.15); }
+  // 16th note hats
+  for (let t = 0; t < dur; t += b / 4) synthHihat(ctx, master, now, t, 0.03, 0.02);
+  // Gritty bass with detuned layer
+  for (let t = 0; t < dur; t += b) {
+    const f = bassNotes[Math.floor(t / (b * 4)) % bassNotes.length];
+    synthBass(ctx, master, now, t, f, b * 0.85, 'sawtooth', 0.2);
+    synthBass(ctx, master, now, t, f * 1.01, b * 0.85, 'square', 0.08);
+  }
+  // Dark pad
+  let ct = 0, ci = 0;
+  while (ct < dur) {
+    synthChord(ctx, master, now, ct, chords[ci % chords.length], b * 4, 'sawtooth', 0.03);
+    ct += b * 4; ci++;
+  }
+  // Aggressive lead (fast arps)
+  let lt = 0;
+  while (lt < dur) {
+    const ci2 = Math.floor(lt / (b * 4)) % chords.length;
+    const pool = [...chords[ci2], ...leadNotes.slice(0, 3)];
+    synthNote(ctx, master, now, lt, pool[Math.floor(Math.random() * pool.length)], b * 0.2, 'sawtooth', 0.045);
+    lt += b * 0.25;
+  }
+}
+
+function playReggaeton(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  const bassNotes = [73.42, 82.41, 65.41, 87.31]; // D2, E2, C2, F2
+  const chords = [
+    [293.66, 369.99, 440.0],   // Dm
+    [329.63, 415.30, 493.88],  // E
+    [261.63, 329.63, 392.0],   // C
+    [349.23, 440.0, 523.25],   // F
+  ];
+  const melodyNotes = [587.33, 659.25, 698.46, 783.99, 880.0];
+
+  // Dembow rhythm: kick pattern
+  for (let bar = 0; bar < dur; bar += b * 4) {
+    synthKick(ctx, master, now, bar, 140, 0.4);
+    synthKick(ctx, master, now, bar + b * 1.5, 140, 0.3);
+    synthKick(ctx, master, now, bar + b * 2, 140, 0.4);
+    synthKick(ctx, master, now, bar + b * 3.5, 140, 0.3);
+  }
+  // Dembow snare/rim pattern
+  for (let bar = 0; bar < dur; bar += b * 4) {
+    synthSnare(ctx, master, now, bar + b * 0.75, 0.2);
+    synthSnare(ctx, master, now, bar + b * 1.75, 0.15);
+    synthClap(ctx, master, now, bar + b * 2.75, 0.2);
+    synthSnare(ctx, master, now, bar + b * 3.75, 0.15);
+  }
+  // Shaker hats
+  for (let t = 0; t < dur; t += b / 2) synthHihat(ctx, master, now, t, 0.05, 0.03);
+  // Bouncy bass
+  for (let t = 0; t < dur; t += b * 2) {
+    const f = bassNotes[Math.floor(t / (b * 8)) % bassNotes.length];
+    synthBass(ctx, master, now, t, f, b * 0.6, 'square', 0.16);
+    synthBass(ctx, master, now, t + b, f * 1.5, b * 0.4, 'square', 0.1);
+  }
+  // Plucked chords
+  let ct = 0, ci = 0;
+  while (ct < dur) {
+    synthChord(ctx, master, now, ct, chords[ci % chords.length], b * 0.3, 'triangle', 0.04);
+    synthChord(ctx, master, now, ct + b * 2, chords[ci % chords.length], b * 0.3, 'triangle', 0.035);
+    ct += b * 4; ci++;
+  }
+  // Catchy vocal-like melody
+  let mt = 0;
+  while (mt < dur) {
+    if (Math.random() > 0.2) {
+      const nd = b * (Math.random() > 0.4 ? 1 : 0.5);
+      synthNote(ctx, master, now, mt, melodyNotes[Math.floor(Math.random() * melodyNotes.length)], nd, 'sine', 0.055);
+    }
+    mt += b;
+  }
+}
+
+// --- Main dispatcher ---
+function playSynthSong(bpm, duration, style) {
   if (!audioContext) createAudioContext();
   if (audioContext.state === 'suspended') audioContext.resume();
 
   const now = audioContext.currentTime;
-  const beatDur = 60 / bpm;
-
-  // Master gain
   const masterGain = audioContext.createGain();
   masterGain.gain.value = 0.3;
   masterGain.connect(audioContext.destination);
 
-  // Bass line
-  const bassNotes = [65.41, 82.41, 73.42, 87.31]; // C2, E2, D2, F2
-  for (let t = 0; t < duration; t += beatDur) {
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.value = bassNotes[Math.floor(t / beatDur) % bassNotes.length];
-    gain.gain.setValueAtTime(0.15, now + t);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + t + beatDur * 0.8);
-    osc.connect(gain);
-    gain.connect(masterGain);
-    osc.start(now + t);
-    osc.stop(now + t + beatDur * 0.9);
-  }
-
-  // Kick drum
-  for (let t = 0; t < duration; t += beatDur) {
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(150, now + t);
-    osc.frequency.exponentialRampToValueAtTime(30, now + t + 0.1);
-    gain.gain.setValueAtTime(0.4, now + t);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + t + 0.15);
-    osc.connect(gain);
-    gain.connect(masterGain);
-    osc.start(now + t);
-    osc.stop(now + t + 0.2);
-  }
-
-  // Hi-hat
-  for (let t = 0; t < duration; t += beatDur / 2) {
-    const bufferSize = audioContext.sampleRate * 0.03;
-    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.3;
-    }
-    const noise = audioContext.createBufferSource();
-    noise.buffer = buffer;
-
-    const hihatFilter = audioContext.createBiquadFilter();
-    hihatFilter.type = 'highpass';
-    hihatFilter.frequency.value = 8000;
-
-    const gain = audioContext.createGain();
-    gain.gain.setValueAtTime(0.08, now + t);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.05);
-
-    noise.connect(hihatFilter);
-    hihatFilter.connect(gain);
-    gain.connect(masterGain);
-    noise.start(now + t);
-    noise.stop(now + t + 0.05);
-  }
-
-  // Melody (pentatonic)
-  const melodyNotes = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25];
-  let melodyTime = 0;
-  while (melodyTime < duration) {
-    const noteDur = beatDur * (Math.random() > 0.5 ? 1 : 0.5);
-    const note = melodyNotes[Math.floor(Math.random() * melodyNotes.length)];
-
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    osc.type = 'square';
-    osc.frequency.value = note;
-    gain.gain.setValueAtTime(0.06, now + melodyTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + melodyTime + noteDur * 0.8);
-    osc.connect(gain);
-    gain.connect(masterGain);
-    osc.start(now + melodyTime);
-    osc.stop(now + melodyTime + noteDur);
-
-    melodyTime += noteDur;
-  }
-
-  // Chords
-  const chordProgressions = [
-    [261.63, 329.63, 392.0],  // C major
-    [220.0, 277.18, 329.63],  // A minor
-    [293.66, 369.99, 440.0],  // D major
-    [246.94, 311.13, 369.99], // B minor
-  ];
-  let chordTime = 0;
-  let chordIdx = 0;
-  while (chordTime < duration) {
-    const chord = chordProgressions[chordIdx % chordProgressions.length];
-    const chordDur = beatDur * 4;
-
-    chord.forEach((freq) => {
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      osc.type = 'triangle';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.04, now + chordTime);
-      gain.gain.setValueAtTime(0.04, now + chordTime + chordDur * 0.7);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + chordTime + chordDur * 0.95);
-      osc.connect(gain);
-      gain.connect(masterGain);
-      osc.start(now + chordTime);
-      osc.stop(now + chordTime + chordDur);
-    });
-
-    chordTime += chordDur;
-    chordIdx++;
+  switch (style) {
+    case 'synthpop':    playSynthpop(audioContext, masterGain, now, bpm, duration); break;
+    case 'edm':         playEdm(audioContext, masterGain, now, bpm, duration); break;
+    case 'dnb':         playDnb(audioContext, masterGain, now, bpm, duration); break;
+    case 'lofi':        playLofi(audioContext, masterGain, now, bpm, duration); break;
+    case 'future-bass': playFutureBass(audioContext, masterGain, now, bpm, duration); break;
+    case 'disco':       playDisco(audioContext, masterGain, now, bpm, duration); break;
+    case 'darksynth':   playDarksynth(audioContext, masterGain, now, bpm, duration); break;
+    case 'reggaeton':   playReggaeton(audioContext, masterGain, now, bpm, duration); break;
+    default:            playSynthpop(audioContext, masterGain, now, bpm, duration); break;
   }
 
   audioNodes.masterGain = masterGain;
@@ -766,7 +1125,7 @@ function startGame() {
 
     // Start music
     createAudioContext();
-    playSynthSong(song.bpm, song.duration);
+    playSynthSong(song.bpm, song.duration, song.style);
 
     // Start game loop
     lastFrameTime = performance.now();
