@@ -409,8 +409,12 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 
   const r = color.r, g = color.g, b = color.b;
   const darkR = Math.max(0, r - 80), darkG = Math.max(0, g - 80), darkB = Math.max(0, b - 80);
-  const LIMB_W = 40;
+  // Scale all pixel sizes relative to canvas size (reference design: 600×720)
+  const s = Math.min(w / 600, h / 720);
+  const LIMB_W = Math.max(4, Math.round(40 * s));
   const LIMB_SHORTEN_FACTOR = 0.3;
+  const headRx = Math.round(55 * s);
+  const headRy = Math.round(65 * s);
 
   // Helper: draw a solid chibi limb with dark 2px stroke border
   function solidLimb(x1, y1, x2, y2, width) {
@@ -449,7 +453,7 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   const rsx = rShoulderX * w, rsy = shoulderY * h;
   const lhx = (cx - legSpread + bodyTilt) * w, lhy = hipY * h;
   const rhx = (cx + legSpread + bodyTilt) * w, rhy = hipY * h;
-  const pad = 10;
+  const pad = Math.round(10 * s);
 
   ctx.save();
   ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
@@ -479,9 +483,9 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 
   // --- Neck ---
   const headX = cx * w;
-  const neckTopY = headY * h + 65;
+  const neckTopY = headY * h + headRy;
   const neckBotY = shoulderY * h;
-  solidLimb(headX, neckTopY, headX, neckBotY, 18);
+  solidLimb(headX, neckTopY, headX, neckBotY, Math.round(18 * s));
 
   // --- Arms (chibi shortened forearms) ---
   if (opts.lArm) {
@@ -491,14 +495,14 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     wristX = elbowX + (wristX - elbowX) * (1 - LIMB_SHORTEN_FACTOR);
     wristY = elbowY + (wristY - elbowY) * (1 - LIMB_SHORTEN_FACTOR);
     solidLimb(lShoulderX * w, shoulderY * h, elbowX, elbowY, LIMB_W);
-    solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - 6);
+    solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - Math.round(6 * s));
     // Elbow joint
-    solidJoint(elbowX, elbowY, 18);
+    solidJoint(elbowX, elbowY, Math.round(18 * s));
     // Mitten hand
     ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
-    ctx.beginPath(); ctx.arc(wristX, wristY, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(20 * s), 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-    ctx.beginPath(); ctx.arc(wristX, wristY, 17, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(17 * s), 0, Math.PI * 2); ctx.fill();
   }
   if (opts.rArm) {
     const elbowX = opts.rArm[0].x * w, elbowY = opts.rArm[0].y * h;
@@ -506,17 +510,17 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     wristX = elbowX + (wristX - elbowX) * (1 - LIMB_SHORTEN_FACTOR);
     wristY = elbowY + (wristY - elbowY) * (1 - LIMB_SHORTEN_FACTOR);
     solidLimb(rShoulderX * w, shoulderY * h, elbowX, elbowY, LIMB_W);
-    solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - 6);
-    solidJoint(elbowX, elbowY, 18);
+    solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - Math.round(6 * s));
+    solidJoint(elbowX, elbowY, Math.round(18 * s));
     ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
-    ctx.beginPath(); ctx.arc(wristX, wristY, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(20 * s), 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-    ctx.beginPath(); ctx.arc(wristX, wristY, 17, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(17 * s), 0, Math.PI * 2); ctx.fill();
   }
 
   // Shoulder joints
-  solidJoint(lShoulderX * w, shoulderY * h, 20);
-  solidJoint(rShoulderX * w, shoulderY * h, 20);
+  solidJoint(lShoulderX * w, shoulderY * h, Math.round(20 * s));
+  solidJoint(rShoulderX * w, shoulderY * h, Math.round(20 * s));
 
   // --- Legs (chibi shortened lower legs) ---
   const hipCx = (cx + bodyTilt) * w;
@@ -531,29 +535,28 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   rFootY = rKneeY + (rFootY - rKneeY) * (1 - LIMB_SHORTEN_FACTOR);
 
   // Upper legs
-  solidLimb(hipCx, hipY * h, lKneeX, lKneeY, LIMB_W + 4);
-  solidLimb(hipCx, hipY * h, rKneeX, rKneeY, LIMB_W + 4);
+  solidLimb(hipCx, hipY * h, lKneeX, lKneeY, LIMB_W + Math.round(4 * s));
+  solidLimb(hipCx, hipY * h, rKneeX, rKneeY, LIMB_W + Math.round(4 * s));
   // Lower legs
   solidLimb(lKneeX, lKneeY, lFootX, lFootY, LIMB_W);
   solidLimb(rKneeX, rKneeY, rFootX, rFootY, LIMB_W);
 
   // Hip joints
-  solidJoint(hipCx, hipY * h, 22);
+  solidJoint(hipCx, hipY * h, Math.round(22 * s));
   // Knee joints
-  solidJoint(lKneeX, lKneeY, 18);
-  solidJoint(rKneeX, rKneeY, 18);
+  solidJoint(lKneeX, lKneeY, Math.round(18 * s));
+  solidJoint(rKneeX, rKneeY, Math.round(18 * s));
 
   // Shoe feet (rounded ellipses)
   for (const [fx, fy] of [[lFootX, lFootY], [rFootX, rFootY]]) {
     ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
-    ctx.beginPath(); ctx.ellipse(fx, fy, 26, 16, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(fx, fy, Math.round(26 * s), Math.round(16 * s), 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-    ctx.beginPath(); ctx.ellipse(fx, fy, 22, 13, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(fx, fy, Math.round(22 * s), Math.round(13 * s), 0, 0, Math.PI * 2); ctx.fill();
   }
 
-  // --- Cute Head (55x65 radius) ---
+  // --- Cute Head (headRx × headRy radius) ---
   const headCY = headY * h;
-  const headRx = 55, headRy = 65;
 
   // Head border
   ctx.save();
@@ -576,28 +579,28 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 
   // Hair (cute spiky strokes)
   ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.85)`;
-  ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(1, Math.round(3 * s)); ctx.lineCap = 'round';
   for (let i = -5; i <= 5; i++) {
-    const hx = headX + i * 9;
+    const hx = headX + i * 9 * s;
     const hy = headCY - headRy - 1;
     ctx.beginPath();
-    ctx.moveTo(hx, hy + 8);
-    ctx.quadraticCurveTo(hx + i * 1.5, hy - 10, hx + i * 3, hy - 1);
+    ctx.moveTo(hx, hy + 8 * s);
+    ctx.quadraticCurveTo(hx + i * 1.5 * s, hy - 10 * s, hx + i * 3 * s, hy - 1);
     ctx.stroke();
   }
 
   // Ears (round, solid)
   const earY = headCY - 1;
   for (const side of [-1, 1]) {
-    const earCx = headX + side * (headRx + 8);
+    const earCx = headX + side * (headRx + Math.round(8 * s));
     ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.8)`;
-    ctx.beginPath(); ctx.arc(earCx, earY, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(earCx, earY, Math.round(12 * s), 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
-    ctx.beginPath(); ctx.arc(earCx, earY, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(earCx, earY, Math.round(10 * s), 0, Math.PI * 2); ctx.fill();
   }
 
   // Big cute eyes (solid white with large pupils)
-  const eyeOffX = 18, eyeOffY = -5, eyeW = 13, eyeH = 10;
+  const eyeOffX = Math.round(18 * s), eyeOffY = -Math.round(5 * s), eyeW = Math.round(13 * s), eyeH = Math.round(10 * s);
   // Eye whites
   ctx.fillStyle = 'rgb(255, 255, 255)';
   ctx.beginPath(); ctx.ellipse(headX - eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
@@ -609,28 +612,29 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.beginPath(); ctx.ellipse(headX + eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
   // Large pupils
   ctx.fillStyle = `rgb(${darkR}, ${darkG}, ${darkB})`;
-  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, 6, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, Math.round(6 * s), 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, Math.round(6 * s), 0, Math.PI * 2); ctx.fill();
   // Eye sparkle
   ctx.fillStyle = 'rgb(255, 255, 255)';
-  ctx.beginPath(); ctx.arc(headX - eyeOffX + 3, headCY + eyeOffY - 3, 2.5, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(headX + eyeOffX + 3, headCY + eyeOffY - 3, 2.5, 0, Math.PI * 2); ctx.fill();
+  const sp = Math.round(3 * s), sr = Math.max(1, Math.round(2.5 * s));
+  ctx.beginPath(); ctx.arc(headX - eyeOffX + sp, headCY + eyeOffY - sp, sr, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX + eyeOffX + sp, headCY + eyeOffY - sp, sr, 0, Math.PI * 2); ctx.fill();
 
   // Nose (white highlight to stand out against any character color)
   ctx.fillStyle = `rgba(255, 255, 255, 0.55)`;
-  ctx.beginPath(); ctx.arc(headX, headCY + 9, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX, headCY + Math.round(9 * s), Math.max(2, Math.round(4 * s)), 0, Math.PI * 2); ctx.fill();
 
   // Mouth (cute smile arc)
   ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.8)`;
-  ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(1, Math.round(2.5 * s)); ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.arc(headX, headCY + 21, 13, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.arc(headX, headCY + Math.round(21 * s), Math.round(13 * s), 0.15 * Math.PI, 0.85 * Math.PI);
   ctx.stroke();
 
   // Blush (cute rosy cheeks)
   ctx.fillStyle = 'rgba(255, 150, 180, 0.35)';
-  ctx.beginPath(); ctx.ellipse(headX - 33, headCY + 10, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(headX + 33, headCY + 10, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(headX - Math.round(33 * s), headCY + Math.round(10 * s), Math.round(12 * s), Math.round(7 * s), 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(headX + Math.round(33 * s), headCY + Math.round(10 * s), Math.round(12 * s), Math.round(7 * s), 0, 0, Math.PI * 2); ctx.fill();
 }
 
 // ===== Song / Beat Map Definitions =====
