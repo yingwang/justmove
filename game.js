@@ -57,6 +57,12 @@ let poseMatchScore = 0;
 let audioNodes = {};
 let songDuration = 0;
 
+// Custom audio state
+let customAudioBuffer = null;
+let customAudioBpm = 120;
+let customAudioDifficulty = 'medium';
+let customAudioReady = false;
+
 // Visual effects state
 let particles = [];
 let lastRatingTime = 0;
@@ -615,6 +621,20 @@ const SONGS = {
     style: 'house',
     generateBeats() { return generateStructuredBeatMap(124, 60, 'medium', 'house'); },
   },
+  'custom-audio': {
+    name: 'Custom Audio',
+    bpm: 120,
+    duration: 60,
+    difficulty: 'medium',
+    style: 'custom',
+    generateBeats() {
+      const bpm = customAudioBpm || 120;
+      const dur = customAudioBuffer ? customAudioBuffer.duration : 60;
+      const diff = customAudioDifficulty || 'medium';
+      // Use hiphop style for choreography since it's versatile
+      return generateStructuredBeatMap(bpm, dur, diff, 'hiphop');
+    },
+  },
 };
 
 // --- Song structure: each song has sections (intro, verse, chorus, drop, etc.) ---
@@ -818,6 +838,161 @@ function generateBeatMap(bpm, duration, difficulty) {
 // Advanced procedural music with vocals, structured arrangements, and effects
 function createAudioContext() {
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+// ===== Custom Audio Loading & BPM Detection =====
+async function loadCustomAudio(file) {
+  const statusEl = document.getElementById('audio-loading-status');
+  const fileNameEl = document.getElementById('audio-file-name');
+  const optionsEl = document.getElementById('custom-audio-options');
+  const uploadLabel = document.getElementById('upload-label');
+
+  statusEl.classList.remove('hidden');
+  statusEl.textContent = 'Loading audio...';
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+    customAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+    tempCtx.close();
+
+    statusEl.textContent = 'Detecting BPM...';
+    customAudioBpm = detectBPM(customAudioBuffer);
+
+    // Update the custom song entry
+    SONGS['custom-audio'].bpm = customAudioBpm;
+    SONGS['custom-audio'].duration = customAudioBuffer.duration;
+
+    fileNameEl.textContent = file.name;
+    uploadLabel.classList.add('loaded');
+    statusEl.textContent = `Ready! Detected ${customAudioBpm} BPM · ${Math.round(customAudioBuffer.duration)}s`;
+    optionsEl.classList.remove('hidden');
+    customAudioReady = true;
+
+    // Auto-select custom audio song
+    document.querySelectorAll('.song-btn').forEach((b) => b.classList.remove('selected'));
+    selectedSong = 'custom-audio';
+  } catch (err) {
+    statusEl.textContent = 'Error loading audio file. Please try another file.';
+    customAudioReady = false;
+  }
+}
+
+function detectBPM(audioBuffer) {
+  // Downsample to mono for analysis
+  const rawData = audioBuffer.getChannelData(0);
+  const sampleRate = audioBuffer.sampleRate;
+
+  // Use onset detection via spectral energy flux
+  const windowSize = Math.round(sampleRate * 0.02); // 20ms windows
+  const hopSize = Math.round(windowSize / 2);
+
+  // Calculate energy for each window
+  const energies = [];
+  for (let i = 0; i + windowSize < rawData.length; i += hopSize) {
+    let energy = 0;
+    for (let j = 0; j < windowSize; j++) {
+      energy += rawData[i + j] * rawData[i + j];
+    }
+    energies.push(energy / windowSize);
+  }
+
+  // Detect onsets: peaks in energy difference
+  const onsets = [];
+  const threshold = 1.5;
+  const windowAvg = 8;
+  for (let i = windowAvg; i < energies.length; i++) {
+    let avg = 0;
+    for (let j = 1; j <= windowAvg; j++) avg += energies[i - j];
+    avg /= windowAvg;
+    if (avg > 0 && energies[i] / avg > threshold) {
+      onsets.push(i * hopSize / sampleRate); // time in seconds
+    }
+  }
+
+  // Calculate intervals between onsets
+  const intervals = [];
+  for (let i = 1; i < onsets.length; i++) {
+    const interval = onsets[i] - onsets[i - 1];
+    if (interval > 0.2 && interval < 2.0) { // between 30 and 300 BPM
+      intervals.push(interval);
+    }
+  }
+
+  if (intervals.length === 0) return 120; // fallback
+
+  // Cluster intervals to find most common tempo
+  const bpmCounts = {};
+  for (const interval of intervals) {
+    const bpm = Math.round(60 / interval);
+    // Also consider double and half time
+    for (const candidate of [bpm, bpm * 2, Math.round(bpm / 2)]) {
+      if (candidate >= 60 && candidate <= 200) {
+        const rounded = Math.round(candidate / 2) * 2; // round to even
+        bpmCounts[rounded] = (bpmCounts[rounded] || 0) + 1;
+      }
+    }
+  }
+
+  // Find the most common BPM
+  let bestBpm = 120;
+  let bestCount = 0;
+  for (const [bpm, count] of Object.entries(bpmCounts)) {
+    if (count > bestCount) {
+      bestCount = count;
+      bestBpm = parseInt(bpm);
+    }
+  }
+
+  return bestBpm;
+}
+
+function playCustomAudio(ctx, masterGain, now, duration) {
+  if (!customAudioBuffer) return;
+  const source = ctx.createBufferSource();
+  source.buffer = customAudioBuffer;
+  source.connect(masterGain);
+  source.start(now);
+  // Stop at duration if audio is longer
+  if (customAudioBuffer.duration > duration + 1) {
+    source.stop(now + duration + 1);
+  }
+  audioNodes.customSource = source;
+}
+
+// ===== Beat Accent Sound for 卡点 (Beat-sync emphasis) =====
+function scheduleBeatAccents(ctx, masterGain, now, bpm, duration) {
+  const beatInterval = 60 / bpm;
+  // Play a subtle tick/accent on every beat for strong rhythmic feel
+  for (let t = 0; t < duration; t += beatInterval) {
+    // Subtle click accent
+    const click = ctx.createOscillator();
+    const clickGain = ctx.createGain();
+    click.type = 'sine';
+    click.frequency.setValueAtTime(1200, now + t);
+    click.frequency.exponentialRampToValueAtTime(800, now + t + 0.015);
+    clickGain.gain.setValueAtTime(0.03, now + t);
+    clickGain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.03);
+    click.connect(clickGain);
+    clickGain.connect(masterGain);
+    click.start(now + t);
+    click.stop(now + t + 0.05);
+
+    // On downbeats (every 4 beats), add a stronger accent
+    const beatNum = Math.round(t / beatInterval);
+    if (beatNum % 4 === 0) {
+      const accent = ctx.createOscillator();
+      const accentGain = ctx.createGain();
+      accent.type = 'triangle';
+      accent.frequency.setValueAtTime(600, now + t);
+      accentGain.gain.setValueAtTime(0.04, now + t);
+      accentGain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.06);
+      accent.connect(accentGain);
+      accentGain.connect(masterGain);
+      accent.start(now + t);
+      accent.stop(now + t + 0.08);
+    }
+  }
 }
 
 // Shared noise buffer (created once, reused)
@@ -1632,18 +1807,28 @@ function playSynthSong(bpm, duration, style) {
   masterGain.gain.value = 0.3;
   masterGain.connect(audioContext.destination);
 
-  switch (style) {
-    case 'synthpop':    playSynthpop(audioContext, masterGain, now, bpm, duration); break;
-    case 'edm':         playEdm(audioContext, masterGain, now, bpm, duration); break;
-    case 'dnb':         playDnb(audioContext, masterGain, now, bpm, duration); break;
-    case 'lofi':        playLofi(audioContext, masterGain, now, bpm, duration); break;
-    case 'future-bass': playFutureBass(audioContext, masterGain, now, bpm, duration); break;
-    case 'disco':       playDisco(audioContext, masterGain, now, bpm, duration); break;
-    case 'darksynth':   playDarksynth(audioContext, masterGain, now, bpm, duration); break;
-    case 'reggaeton':   playReggaeton(audioContext, masterGain, now, bpm, duration); break;
-    case 'hiphop':      playHiphop(audioContext, masterGain, now, bpm, duration); break;
-    case 'house':       playHouse(audioContext, masterGain, now, bpm, duration); break;
-    default:            playSynthpop(audioContext, masterGain, now, bpm, duration); break;
+  if (style === 'custom' && customAudioBuffer) {
+    // Play real audio file
+    masterGain.gain.value = 0.7;
+    playCustomAudio(audioContext, masterGain, now, duration);
+    // Add beat accents on top for 卡点 feel
+    scheduleBeatAccents(audioContext, masterGain, now, bpm, duration);
+  } else {
+    switch (style) {
+      case 'synthpop':    playSynthpop(audioContext, masterGain, now, bpm, duration); break;
+      case 'edm':         playEdm(audioContext, masterGain, now, bpm, duration); break;
+      case 'dnb':         playDnb(audioContext, masterGain, now, bpm, duration); break;
+      case 'lofi':        playLofi(audioContext, masterGain, now, bpm, duration); break;
+      case 'future-bass': playFutureBass(audioContext, masterGain, now, bpm, duration); break;
+      case 'disco':       playDisco(audioContext, masterGain, now, bpm, duration); break;
+      case 'darksynth':   playDarksynth(audioContext, masterGain, now, bpm, duration); break;
+      case 'reggaeton':   playReggaeton(audioContext, masterGain, now, bpm, duration); break;
+      case 'hiphop':      playHiphop(audioContext, masterGain, now, bpm, duration); break;
+      case 'house':       playHouse(audioContext, masterGain, now, bpm, duration); break;
+      default:            playSynthpop(audioContext, masterGain, now, bpm, duration); break;
+    }
+    // Add beat accents for all synth songs too for better 卡点
+    scheduleBeatAccents(audioContext, masterGain, now, bpm, duration);
   }
 
   audioNodes.masterGain = masterGain;
@@ -2486,6 +2671,25 @@ document.querySelectorAll('.song-btn').forEach((btn) => {
     selectedSong = btn.dataset.song;
   });
 });
+
+// Custom audio upload
+const audioUploadInput = document.getElementById('audio-upload');
+if (audioUploadInput) {
+  audioUploadInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      loadCustomAudio(file);
+    }
+  });
+}
+
+const customDifficultySelect = document.getElementById('custom-difficulty');
+if (customDifficultySelect) {
+  customDifficultySelect.addEventListener('change', (e) => {
+    customAudioDifficulty = e.target.value;
+    SONGS['custom-audio'].difficulty = customAudioDifficulty;
+  });
+}
 
 startBtn.addEventListener('click', () => {
   if (!holistic) {
