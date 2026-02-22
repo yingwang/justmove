@@ -57,6 +57,9 @@ let poseMatchScore = 0;
 let audioNodes = {};
 let songDuration = 0;
 
+// Pixabay audio state
+let songAudioBuffer = null;
+
 // Custom audio state
 let customAudioBuffer = null;
 let customAudioBpm = 120;
@@ -540,6 +543,7 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 }
 
 // ===== Song / Beat Map Definitions =====
+// Audio from Pixabay (https://pixabay.com/music/) — free to use under the Pixabay Content License
 const SONGS = {
   'electric-dreams': {
     name: 'Electric Dreams',
@@ -547,7 +551,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'easy',
     style: 'synthpop',
-    generateBeats() { return generateStructuredBeatMap(120, 60, 'easy', 'synthpop'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2022/05/13/audio_c6c2d84ed3.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'easy', 'synthpop'); },
   },
   'neon-nights': {
     name: 'Neon Nights',
@@ -555,7 +560,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'medium',
     style: 'edm',
-    generateBeats() { return generateStructuredBeatMap(140, 60, 'medium', 'edm'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2023/02/13/audio_04752d5da3.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'edm'); },
   },
   'cyber-funk': {
     name: 'Cyber Funk',
@@ -563,7 +569,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'hard',
     style: 'dnb',
-    generateBeats() { return generateStructuredBeatMap(160, 60, 'hard', 'dnb'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2023/03/11/audio_27b15d33b9.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'dnb'); },
   },
   'sunset-groove': {
     name: 'Sunset Groove',
@@ -571,7 +578,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'easy',
     style: 'lofi',
-    generateBeats() { return generateStructuredBeatMap(100, 60, 'easy', 'lofi'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/06/03/audio_b7b75975b8.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'easy', 'lofi'); },
   },
   'tokyo-drift': {
     name: 'Tokyo Drift',
@@ -579,7 +587,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'medium',
     style: 'future-bass',
-    generateBeats() { return generateStructuredBeatMap(128, 60, 'medium', 'future-bass'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/06/10/audio_8045338a6f.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'future-bass'); },
   },
   'disco-inferno': {
     name: 'Disco Inferno',
@@ -587,7 +596,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'easy',
     style: 'disco',
-    generateBeats() { return generateStructuredBeatMap(115, 60, 'easy', 'disco'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2022/10/25/audio_4f7ef04ca8.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'easy', 'disco'); },
   },
   'dark-matter': {
     name: 'Dark Matter',
@@ -595,7 +605,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'hard',
     style: 'darksynth',
-    generateBeats() { return generateStructuredBeatMap(150, 60, 'hard', 'darksynth'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2022/08/23/audio_d1718372cb.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'darksynth'); },
   },
   'tropical-heat': {
     name: 'Tropical Heat',
@@ -603,7 +614,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'medium',
     style: 'reggaeton',
-    generateBeats() { return generateStructuredBeatMap(110, 60, 'medium', 'reggaeton'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/04/14/audio_5d6668b1f0.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'reggaeton'); },
   },
   'hiphop-cypher': {
     name: 'Hip-Hop Cypher',
@@ -611,7 +623,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'medium',
     style: 'hiphop',
-    generateBeats() { return generateStructuredBeatMap(95, 60, 'medium', 'hiphop'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/07/24/audio_e449d10473.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'hiphop'); },
   },
   'house-party': {
     name: 'House Party',
@@ -619,7 +632,8 @@ const SONGS = {
     duration: 60,
     difficulty: 'medium',
     style: 'house',
-    generateBeats() { return generateStructuredBeatMap(124, 60, 'medium', 'house'); },
+    audioUrl: 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b5b7b2b2.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'house'); },
   },
   'custom-audio': {
     name: 'Custom Audio',
@@ -838,6 +852,30 @@ function generateBeatMap(bpm, duration, difficulty) {
 // Advanced procedural music with vocals, structured arrangements, and effects
 function createAudioContext() {
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+// ===== Pixabay Audio Loading =====
+async function loadSongFromUrl(url) {
+  songAudioBuffer = null;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Failed to fetch audio');
+  const arrayBuffer = await response.arrayBuffer();
+  const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+  songAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+  tempCtx.close();
+  return songAudioBuffer;
+}
+
+function playSongAudioBuffer(ctx, masterGain, now, duration) {
+  if (!songAudioBuffer) return;
+  const source = ctx.createBufferSource();
+  source.buffer = songAudioBuffer;
+  source.connect(masterGain);
+  source.start(now);
+  if (songAudioBuffer.duration > duration + 1) {
+    source.stop(now + duration + 1);
+  }
+  audioNodes.songSource = source;
 }
 
 // ===== Custom Audio Loading & BPM Detection =====
@@ -1807,7 +1845,12 @@ function playSynthSong(bpm, duration, style) {
   masterGain.gain.value = 0.3;
   masterGain.connect(audioContext.destination);
 
-  if (style === 'custom' && customAudioBuffer) {
+  if (songAudioBuffer) {
+    // Play Pixabay audio
+    masterGain.gain.value = 0.7;
+    playSongAudioBuffer(audioContext, masterGain, now, duration);
+    scheduleBeatAccents(audioContext, masterGain, now, bpm, duration);
+  } else if (style === 'custom' && customAudioBuffer) {
     // Play real audio file
     masterGain.gain.value = 0.7;
     playCustomAudio(audioContext, masterGain, now, duration);
@@ -2348,7 +2391,7 @@ function switchScreen(screenId) {
   document.getElementById(screenId).classList.add('active');
 }
 
-function startGame() {
+async function startGame() {
   gameState = 'countdown';
   switchScreen('game-screen');
 
@@ -2360,6 +2403,7 @@ function startGame() {
   ratings = { perfect: 0, great: 0, good: 0, miss: 0 };
   currentBeatIndex = 0;
   poseMatchScore = 0;
+  songAudioBuffer = null;
 
   // Setup canvases
   gameCanvas.width = window.innerWidth;
@@ -2367,8 +2411,25 @@ function startGame() {
   targetPoseCanvas.width = 200;
   targetPoseCanvas.height = 250;
 
-  // Generate beat map
+  // Load Pixabay audio if the song has an audioUrl
   const song = SONGS[selectedSong];
+  if (song.audioUrl) {
+    loadingOverlay.classList.remove('hidden');
+    loadingText.textContent = 'Loading music from Pixabay...';
+    try {
+      await loadSongFromUrl(song.audioUrl);
+      // Use actual audio duration if shorter than configured
+      if (songAudioBuffer) {
+        song.duration = Math.min(song.duration, Math.floor(songAudioBuffer.duration));
+      }
+    } catch (e) {
+      // Fall back to synthesized audio
+      songAudioBuffer = null;
+    }
+    loadingOverlay.classList.add('hidden');
+  }
+
+  // Generate beat map
   beatMap = song.generateBeats();
   songDuration = song.duration;
   currentSongBpm = song.bpm;
@@ -2766,6 +2827,7 @@ function endGame() {
     audioContext.close();
     audioContext = null;
   }
+  songAudioBuffer = null;
 
   // Clean up match meter
   const meter = document.querySelector('.match-meter');
