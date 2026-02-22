@@ -72,6 +72,17 @@ const NEON_COLORS = {
   miss: { r: 255, g: 51, b: 102 },     // pink
 };
 
+// Just Dance style colors
+const JUST_DANCE_COLORS = {
+  perfect: { r: 255, g: 215, b: 0 },   // gold
+  great: { r: 0, g: 255, b: 136 },    // green
+  good: { r: 0, g: 200, b: 255 },     // cyan
+  miss: { r: 255, g: 51, b: 102 },    // pink
+  background: { r: 10, g: 10, b: 26 }, // dark blue
+  player: { r: 0, g: 200, b: 255 },   // player outline
+  target: { r: 255, g: 105, b: 180 }, // target outline
+};
+
 // ===== Pose Definitions =====
 // Each pose is defined by expected angles/positions of key body parts
 const POSES = {
@@ -101,7 +112,7 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.35, y: 0.25 }, { x: 0.3, y: 0.15 }],
         rArm: [{ x: 0.65, y: 0.25 }, { x: 0.7, y: 0.15 }],
-      });
+      }, 'target');
     },
   },
   'arms-out': {
@@ -130,7 +141,7 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.2, y: 0.4 }, { x: 0.1, y: 0.4 }],
         rArm: [{ x: 0.8, y: 0.4 }, { x: 0.9, y: 0.4 }],
-      });
+      }, 'target');
     },
   },
   'left-arm-up': {
@@ -157,7 +168,7 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.35, y: 0.25 }, { x: 0.3, y: 0.15 }],
         rArm: [{ x: 0.65, y: 0.5 }, { x: 0.65, y: 0.6 }],
-      });
+      }, 'target');
     },
   },
   'right-arm-up': {
@@ -182,7 +193,7 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.35, y: 0.5 }, { x: 0.35, y: 0.6 }],
         rArm: [{ x: 0.65, y: 0.25 }, { x: 0.7, y: 0.15 }],
-      });
+      }, 'target');
     },
   },
   'hands-on-hips': {
@@ -210,7 +221,7 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.38, y: 0.45 }, { x: 0.4, y: 0.55 }],
         rArm: [{ x: 0.62, y: 0.45 }, { x: 0.6, y: 0.55 }],
-      });
+      }, 'target');
     },
   },
   'squat': {
@@ -239,7 +250,7 @@ const POSES = {
         lArm: [{ x: 0.3, y: 0.45 }, { x: 0.2, y: 0.45 }],
         rArm: [{ x: 0.7, y: 0.45 }, { x: 0.8, y: 0.45 }],
         squat: true,
-      });
+      }, 'target');
     },
   },
   'lean-left': {
@@ -267,7 +278,7 @@ const POSES = {
         lArm: [{ x: 0.3, y: 0.35 }, { x: 0.2, y: 0.3 }],
         rArm: [{ x: 0.6, y: 0.45 }, { x: 0.55, y: 0.55 }],
         leanLeft: true,
-      });
+      }, 'target');
     },
   },
   'lean-right': {
@@ -294,7 +305,7 @@ const POSES = {
         lArm: [{ x: 0.4, y: 0.45 }, { x: 0.45, y: 0.55 }],
         rArm: [{ x: 0.7, y: 0.35 }, { x: 0.8, y: 0.3 }],
         leanRight: true,
-      });
+      }, 'target');
     },
   },
   'dab-left': {
@@ -323,7 +334,7 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.25, y: 0.35 }, { x: 0.15, y: 0.5 }],
         rArm: [{ x: 0.55, y: 0.3 }, { x: 0.45, y: 0.2 }],
-      });
+      }, 'target');
     },
   },
   'dab-right': {
@@ -348,7 +359,7 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.45, y: 0.3 }, { x: 0.55, y: 0.2 }],
         rArm: [{ x: 0.75, y: 0.35 }, { x: 0.85, y: 0.5 }],
-      });
+      }, 'target');
     },
   },
 };
@@ -360,7 +371,7 @@ function dist2d(a, b) {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
-function drawStickFigure(ctx, w, h, opts = {}) {
+function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.clearRect(0, 0, w, h);
 
   const headY = opts.squat ? 0.3 : 0.18;
@@ -377,9 +388,18 @@ function drawStickFigure(ctx, w, h, opts = {}) {
   const footY = opts.squat ? 0.85 : 0.92;
   const legSpread = opts.squat ? 0.12 : 0.08;
 
+  // Get color based on type
+  let color;
+  if (colorType === 'player') {
+    color = JUST_DANCE_COLORS.player;
+  } else if (colorType === 'target') {
+    color = JUST_DANCE_COLORS.target;
+  } else {
+    color = JUST_DANCE_COLORS[colorType] || JUST_DANCE_COLORS.idle;
+  }
+
   // Animate glow
   const pulse = 0.7 + 0.3 * Math.sin(performance.now() * 0.004);
-  const color = { r: 0, g: 200, b: 255 };
 
   function glowLine(x1, y1, x2, y2, width) {
     // Outer glow
@@ -1470,10 +1490,10 @@ const LIMB_WIDTHS = {
 };
 
 function getNeonColor() {
-  if (poseMatchScore >= 0.8) return NEON_COLORS.perfect;
-  if (poseMatchScore >= 0.5) return NEON_COLORS.good;
-  if (gameState === 'playing' && poseMatchScore < 0.2 && activePose) return NEON_COLORS.miss;
-  return NEON_COLORS.idle;
+  if (poseMatchScore >= 0.8) return JUST_DANCE_COLORS.perfect;
+  if (poseMatchScore >= 0.5) return JUST_DANCE_COLORS.great;
+  if (gameState === 'playing' && poseMatchScore < 0.2 && activePose) return JUST_DANCE_COLORS.miss;
+  return JUST_DANCE_COLORS.player;
 }
 
 function drawNeonLimb(ctx, x1, y1, x2, y2, width, color, glowIntensity) {
@@ -1802,13 +1822,13 @@ function scoreBeat(beat, rating) {
   const cx = window.innerWidth / 2;
   const cy = window.innerHeight / 2;
   if (rating === 'perfect') {
-    spawnParticles(cx, cy, 25, NEON_COLORS.perfect, 8, 1.2);
+    spawnParticles(cx, cy, 25, JUST_DANCE_COLORS.perfect, 8, 1.2);
   } else if (rating === 'great') {
-    spawnParticles(cx, cy, 15, NEON_COLORS.good, 6, 1.0);
+    spawnParticles(cx, cy, 15, JUST_DANCE_COLORS.great, 6, 1.0);
   } else if (rating === 'good') {
-    spawnParticles(cx, cy, 8, NEON_COLORS.idle, 4, 0.8);
+    spawnParticles(cx, cy, 8, JUST_DANCE_COLORS.good, 4, 0.8);
   } else {
-    spawnParticles(cx, cy, 6, NEON_COLORS.miss, 3, 0.6);
+    spawnParticles(cx, cy, 6, JUST_DANCE_COLORS.miss, 3, 0.6);
   }
 }
 
@@ -1900,7 +1920,7 @@ function renderGameEffects(elapsed) {
   // Performance glow (match quality -> screen tint)
   if (poseMatchScore > 0.5 && gameState === 'playing') {
     const intensity = (poseMatchScore - 0.5) * 0.12;
-    const color = poseMatchScore >= 0.8 ? NEON_COLORS.perfect : NEON_COLORS.good;
+    const color = poseMatchScore >= 0.8 ? JUST_DANCE_COLORS.perfect : JUST_DANCE_COLORS.great;
     gameCtx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`;
     gameCtx.fillRect(0, 0, cw, ch);
   }
