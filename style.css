@@ -480,12 +480,12 @@ body {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  border: 3px solid #ff6b00;
+  border: 4px solid #ff6b00;
   background: rgba(255, 107, 0, 0.15);
-  box-shadow: 0 0 12px rgba(255, 107, 0, 0.3), inset 0 0 8px rgba(255, 107, 0, 0.1);
+  box-shadow: 0 0 20px rgba(255, 107, 0, 0.5), inset 0 0 12px rgba(255, 107, 0, 0.2);
   transition: left 0.05s linear;
   display: flex;
   align-items: center;
@@ -493,8 +493,8 @@ body {
 }
 
 .beat-marker .pose-icon {
-  font-size: 1.3rem;
-  filter: drop-shadow(0 0 4px rgba(255, 107, 0, 0.5));
+  font-size: 1.8rem;
+  filter: drop-shadow(0 0 6px rgba(255, 107, 0, 0.7));
 }
 
 .beat-marker.hit {
