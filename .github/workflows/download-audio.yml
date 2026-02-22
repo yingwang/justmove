@@ -1,0 +1,57 @@
+name: Download Audio Files
+
+on:
+  push:
+    branches:
+      - main
+      - copilot/**
+    paths:
+      - 'game.js'
+      - '.github/workflows/download-audio.yml'
+  workflow_dispatch:
+
+jobs:
+  download-audio:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download MP3 files
+        run: |
+          mkdir -p audio
+          download_if_missing() {
+            local url="$1"
+            local dest="$2"
+            if [ ! -f "$dest" ]; then
+              echo "Downloading $dest..."
+              curl -L --fail -o "$dest" "$url" || { echo "Failed to download $dest from $url"; exit 1; }
+            else
+              echo "$dest already exists, skipping."
+            fi
+          }
+          download_if_missing "https://cdn.pixabay.com/audio/2024/07/29/audio_4e09b35d5b.mp3"  "audio/pop-dance-beat.mp3"
+          download_if_missing "https://cdn.pixabay.com/audio/2024/03/26/audio_6846775846.mp3"  "audio/tropical-house.mp3"
+          download_if_missing "https://cdn.pixabay.com/audio/2024/09/24/audio_e4a5da2ff3.mp3"  "audio/funky-groove.mp3"
+          download_if_missing "https://cdn.pixabay.com/audio/2024/06/06/audio_48e9cf2ffa.mp3"  "audio/edm-drop.mp3"
+          download_if_missing "https://cdn.pixabay.com/audio/2024/08/06/audio_69a61c5e14.mp3"  "audio/house-beat.mp3"
+          download_if_missing "https://cdn.pixabay.com/audio/2024/07/24/audio_e449d10473.mp3"  "audio/afrobeats-rhythm.mp3"
+          download_if_missing "https://cdn.pixabay.com/audio/2023/04/23/audio_87b3225287.mp3"  "audio/upbeat-funk.mp3"
+          download_if_missing "https://cdn.pixabay.com/audio/2024/07/30/audio_13d732e545.mp3"  "audio/energetic-beat.mp3"
+          download_if_missing "https://cdn.pixabay.com/audio/2023/10/24/audio_9408f7326a.mp3"  "audio/dnb-breakbeat.mp3"
+          download_if_missing "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"  "audio/high-energy-trap.mp3"
+
+      - name: Commit audio files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add audio/*.mp3 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No new audio files to commit."
+          else
+            COUNT=$(git diff --cached --name-only | wc -l)
+            git commit -m "chore: add ${COUNT} downloaded MP3 audio files"
+            git push
+          fi
