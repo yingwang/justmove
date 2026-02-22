@@ -151,6 +151,114 @@ body {
 .song-difficulty.medium { color: #ffc800; background: rgba(255, 200, 0, 0.1); }
 .song-difficulty.hard { color: #ff3366; background: rgba(255, 51, 102, 0.1); }
 
+/* Custom Audio Upload */
+.custom-audio-section {
+  text-align: center;
+  margin-top: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  max-width: 680px;
+  width: 100%;
+}
+
+.custom-audio-section h2 {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #666;
+  margin-bottom: 0.4rem;
+}
+
+.custom-audio-hint {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 0.8rem;
+}
+
+.custom-audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 2px solid rgba(255, 107, 0, 0.4);
+  border-radius: 25px;
+  background: rgba(255, 107, 0, 0.08);
+  color: #ff6b00;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-upload:hover {
+  border-color: #ff6b00;
+  background: rgba(255, 107, 0, 0.15);
+  box-shadow: 0 0 15px rgba(255, 107, 0, 0.2);
+}
+
+.btn-upload.loaded {
+  border-color: #00ff88;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.08);
+}
+
+.audio-file-name {
+  font-size: 0.85rem;
+  color: #00ff88;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-loading-status {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #00c8ff;
+}
+
+.audio-loading-status.hidden {
+  display: none;
+}
+
+.custom-audio-options {
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.custom-audio-options.hidden {
+  display: none;
+}
+
+.difficulty-label {
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.custom-select {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #ccc;
+  cursor: pointer;
+}
+
 /* Buttons */
 .btn-primary {
   padding: 1rem 3rem;

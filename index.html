@@ -83,6 +83,26 @@
           </button>
         </div>
       </div>
+      <div class="custom-audio-section">
+        <h2>Or Use Your Own Music</h2>
+        <p class="custom-audio-hint">Upload any MP3/WAV file — beats will be auto-detected for perfect sync!</p>
+        <div class="custom-audio-controls">
+          <label class="btn-upload" id="upload-label">
+            <input type="file" id="audio-upload" accept="audio/*" hidden>
+            <span>🎵 Choose Audio File</span>
+          </label>
+          <span id="audio-file-name" class="audio-file-name"></span>
+        </div>
+        <div id="audio-loading-status" class="audio-loading-status hidden"></div>
+        <div class="custom-audio-options hidden" id="custom-audio-options">
+          <label class="difficulty-label">Difficulty:</label>
+          <select id="custom-difficulty" class="custom-select">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+      </div>
       <button id="start-btn" class="btn-primary">START GAME</button>
     </div>
   </div>
