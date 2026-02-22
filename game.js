@@ -2192,6 +2192,8 @@ function drawNeonBody(ctx, landmarks, w, h) {
     const rsx = rShoulder.x * w, rsy = rShoulder.y * h;
     // Estimate hips from shoulders when not detected (e.g. person too close)
     const shoulderWidth = Math.abs(rsx - lsx);
+    // 0.05 = slight inward offset to match natural body taper toward hips
+    // 1.8 = approximate shoulder-to-hip vertical distance relative to shoulder width
     const lhx = hipsVisible ? lHip.x * w : lsx + shoulderWidth * 0.05;
     const lhy = hipsVisible ? lHip.y * h : Math.min(lsy + shoulderWidth * 1.8, h);
     const rhx = hipsVisible ? rHip.x * w : rsx - shoulderWidth * 0.05;
