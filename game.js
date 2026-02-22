@@ -2544,13 +2544,15 @@ async function startGame() {
 
   updateHUD();
 
+  // Create audio context early so countdown beeps can use it
+  createAudioContext();
+
   // Start countdown
   runCountdown(() => {
     gameState = 'playing';
     gameStartTime = performance.now();
 
     // Start music
-    createAudioContext();
     playSynthSong(song.bpm, song.duration, song.style);
 
     // Start game loop
@@ -2577,23 +2579,66 @@ function createMatchMeter() {
   gameScreen.appendChild(label);
 }
 
+function playCountdownBeep(isGo) {
+  try {
+    if (!audioContext) return;
+    if (audioContext.state === 'suspended') audioContext.resume();
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    if (isGo) {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioContext.currentTime);
+      osc.frequency.linearRampToValueAtTime(1320, audioContext.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.5, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
+      osc.start(audioContext.currentTime);
+      osc.stop(audioContext.currentTime + 0.35);
+    } else {
+      osc.type = 'sine';
+      osc.frequency.value = 660;
+      gain.gain.setValueAtTime(0.4, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.18);
+      osc.start(audioContext.currentTime);
+      osc.stop(audioContext.currentTime + 0.18);
+    }
+  } catch (e) { /* ignore audio errors */ }
+}
+
+function triggerCountdownPop(isGo) {
+  countdownNumber.classList.remove('pop', 'go-pop');
+  // Force reflow to restart animation
+  void countdownNumber.offsetWidth;
+  countdownNumber.classList.add(isGo ? 'go-pop' : 'pop');
+}
+
 function runCountdown(callback) {
   countdownEl.classList.remove('hidden');
   let count = 3;
+  countdownNumber.dataset.count = count;
   countdownNumber.textContent = count;
+  playCountdownBeep(false);
+  triggerCountdownPop(false);
 
   const interval = setInterval(() => {
     count--;
     if (count > 0) {
+      countdownNumber.dataset.count = count;
       countdownNumber.textContent = count;
+      playCountdownBeep(false);
+      triggerCountdownPop(false);
     } else if (count === 0) {
+      countdownNumber.dataset.count = 'go';
       countdownNumber.textContent = 'GO!';
+      playCountdownBeep(true);
+      triggerCountdownPop(true);
     } else {
       clearInterval(interval);
       countdownEl.classList.add('hidden');
       callback();
     }
-  }, 1000);
+  }, 700);
 }
 
 function gameLoop() {
