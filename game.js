@@ -2111,8 +2111,9 @@ function drawNeonBody(ctx, landmarks, w, h) {
     // Apply chibi shortening to lower arms and lower legs
     const shorten = CHIBI_SHORTEN[key] || 0;
     if (shorten > 0) {
-      bx = bx + (ax - bx) * shorten;
-      by = by + (ay - by) * shorten;
+      // Linear interpolation: reduce segment length by shorten factor
+      bx = ax + (bx - ax) * (1 - shorten);
+      by = ay + (by - ay) * (1 - shorten);
       shortenedEndpoints[j] = { x: bx, y: by };
     }
 
@@ -2254,7 +2255,7 @@ function drawNeonBody(ctx, landmarks, w, h) {
       const lex = lEye.x * w, ley = lEye.y * h;
       const rex = rEye.x * w, rey = rEye.y * h;
       // Eye whites (solid)
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = 'rgb(255, 255, 255)';
       ctx.beginPath(); ctx.ellipse(lex, ley, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(rex, rey, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
       // Eye outline
@@ -2267,12 +2268,12 @@ function drawNeonBody(ctx, landmarks, w, h) {
       ctx.beginPath(); ctx.arc(lex, ley, 4.5, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(rex, rey, 4.5, 0, Math.PI * 2); ctx.fill();
       // Eye sparkle (bigger)
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = 'rgb(255, 255, 255)';
       ctx.beginPath(); ctx.arc(lex + 2.5, ley - 2.5, 2, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(rex + 2.5, rey - 2.5, 2, 0, Math.PI * 2); ctx.fill();
     } else {
       // Fallback eyes at estimated positions
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = 'rgb(255, 255, 255)';
       ctx.beginPath(); ctx.ellipse(hx - 14, hy - 6, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(hx + 14, hy - 6, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = `rgba(${Math.max(0, r - 80)}, ${Math.max(0, g - 80)}, ${Math.max(0, b - 80)}, 0.7)`;
@@ -2282,7 +2283,7 @@ function drawNeonBody(ctx, landmarks, w, h) {
       ctx.fillStyle = `rgb(${Math.max(0, r - 60)}, ${Math.max(0, g - 60)}, ${Math.max(0, b - 60)})`;
       ctx.beginPath(); ctx.arc(hx - 14, hy - 6, 4.5, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(hx + 14, hy - 6, 4.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = 'rgb(255, 255, 255)';
       ctx.beginPath(); ctx.arc(hx - 12, hy - 8, 2, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(hx + 16, hy - 8, 2, 0, Math.PI * 2); ctx.fill();
     }
