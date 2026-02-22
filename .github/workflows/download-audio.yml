@@ -27,7 +27,7 @@ jobs:
             local dest="$2"
             if [ ! -f "$dest" ]; then
               echo "Downloading $dest..."
-              curl -L --fail -o "$dest" "$url" || { echo "Failed to download $dest from $url"; exit 1; }
+              curl -L --fail -o "$dest" "$url" || { echo "Warning: failed to download $dest, skipping."; rm -f "$dest"; }
             else
               echo "$dest already exists, skipping."
             fi
