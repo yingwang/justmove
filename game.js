@@ -419,13 +419,42 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     ctx.lineWidth = width * 0.35; ctx.stroke();
   }
 
-  // Head glow
-  const headGrad = ctx.createRadialGradient(cx * w, headY * h, 0, cx * w, headY * h, 18);
+  // Head (human-like oval with facial features)
+  const headX = cx * w;
+  const headCY = headY * h;
+  const headRx = 16, headRy = 20;
+
+  // Outer glow
+  ctx.save();
+  ctx.translate(headX, headCY);
+  ctx.scale(1, headRy / headRx);
+  const headGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, headRx * 1.8);
   headGrad.addColorStop(0, `rgba(255, 255, 255, ${0.4 * pulse})`);
   headGrad.addColorStop(0.35, `rgba(${color.r}, ${color.g}, ${color.b}, 0.6)`);
   headGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = headGrad;
-  ctx.beginPath(); ctx.arc(cx * w, headY * h, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, headRx * 1.8, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Solid head shape
+  ctx.save();
+  ctx.translate(headX, headCY);
+  ctx.scale(1, headRy / headRx);
+  ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.25)`;
+  ctx.beginPath(); ctx.arc(0, 0, headRx, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Eyes
+  const eyeOffX = 6, eyeOffY = -3, eyeR = 2.2;
+  ctx.fillStyle = `rgba(255, 255, 255, ${0.85 * pulse})`;
+  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, eyeR, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, eyeR, 0, Math.PI * 2); ctx.fill();
+
+  // Mouth (small smile arc)
+  ctx.beginPath();
+  ctx.arc(headX, headCY + 7, 5, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
+  ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.stroke();
 
   // Spine
   glowLine(cx * w, (headY + 0.06) * h, (cx + bodyTilt) * w, hipY * h, 8);
@@ -1575,25 +1604,61 @@ function drawNeonBody(ctx, landmarks, w, h) {
     drawNeonJoint(ctx, lm.x * w, lm.y * h, 6, color, glowIntensity);
   }
 
-  // Head glow (larger, special)
+  // Head (human-like oval with facial features)
   const nose = landmarks[0];
   if (nose && nose.visibility > 0.5) {
-    const headRadius = 28;
-    const grad = ctx.createRadialGradient(nose.x * w, nose.y * h, 0, nose.x * w, nose.y * h, headRadius * 2);
+    const hx = nose.x * w, hy = nose.y * h;
+    const headRx = 24, headRy = 30;
+
+    // Outer glow (oval)
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.scale(1, headRy / headRx);
+    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, headRx * 2);
     grad.addColorStop(0, `rgba(255, 255, 255, ${0.35 * glowIntensity})`);
     grad.addColorStop(0.25, `rgba(${color.r}, ${color.g}, ${color.b}, ${0.5 * glowIntensity})`);
     grad.addColorStop(0.6, `rgba(${color.r}, ${color.g}, ${color.b}, ${0.15 * glowIntensity})`);
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(nose.x * w, nose.y * h, headRadius * 2, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, headRx * 2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
 
-    // Solid head core
-    ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.7)`;
-    ctx.beginPath();
-    ctx.arc(nose.x * w, nose.y * h, headRadius * 0.7, 0, Math.PI * 2);
-    ctx.fill();
+    // Solid head oval
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.scale(1, headRy / headRx);
+    ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.35)`;
+    ctx.beginPath(); ctx.arc(0, 0, headRx * 0.7, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // Eyes (use actual face landmarks if available)
+    const lEye = landmarks[2], rEye = landmarks[5];
+    const eyeR = 3;
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * glowIntensity})`;
+    if (lEye && rEye && lEye.visibility > 0.4 && rEye.visibility > 0.4) {
+      ctx.beginPath(); ctx.arc(lEye.x * w, lEye.y * h, eyeR, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(rEye.x * w, rEye.y * h, eyeR, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.arc(hx - 9, hy - 5, eyeR, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx + 9, hy - 5, eyeR, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Mouth (use actual face landmarks if available)
+    const mouthL = landmarks[9], mouthR = landmarks[10];
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * glowIntensity})`;
+    ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+    if (mouthL && mouthR && mouthL.visibility > 0.4 && mouthR.visibility > 0.4) {
+      const mx = (mouthL.x + mouthR.x) / 2 * w;
+      const my = (mouthL.y + mouthR.y) / 2 * h;
+      const mw = Math.abs(mouthR.x - mouthL.x) * w / 2;
+      ctx.beginPath();
+      ctx.arc(mx, my, Math.max(mw, 4), 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(hx, hy + 10, 6, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+    }
   }
 }
 
