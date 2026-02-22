@@ -1127,6 +1127,108 @@ function scheduleBeatAccents(ctx, masterGain, now, bpm, duration) {
   }
 }
 
+// ===== Synthetic Rhythm Fallback =====
+// Generates a programmatic drum-machine beat when no MP3 file is available
+function playSyntheticRhythm(ctx, masterGain, now, bpm, duration, style) {
+  const b = 60 / bpm;
+
+  // Style-specific bass notes (root, fifth, octave pattern)
+  const bassPatterns = {
+    edm:          [60, 60, 67, 60],
+    house:        [48, 48, 55, 48],
+    hiphop:       [36, 36, 43, 36],
+    dnb:          [36, 43, 36, 48],
+    'future-bass':[48, 55, 48, 60],
+    lofi:         [48, 48, 55, 53],
+    synthpop:     [52, 52, 59, 52],
+    disco:        [48, 55, 48, 55],
+  };
+  const bassNotes = bassPatterns[style] || bassPatterns.synthpop;
+
+  // Kick patterns per style (true = kick on that 16th-note step, 4 steps per beat, 16 per bar)
+  const fourFloor = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0]; // four-on-the-floor
+  const hipHopK   = [1,0,0,0, 0,0,1,0, 1,0,1,0, 0,0,0,0];
+  const kickMap = {
+    edm: fourFloor, house: fourFloor, disco: fourFloor,
+    hiphop: hipHopK, dnb: hipHopK, 'future-bass': fourFloor,
+    lofi: hipHopK, synthpop: fourFloor,
+  };
+  const kickPattern = kickMap[style] || fourFloor;
+
+  const step = b / 4; // 16th-note step
+
+  for (let t = 0; t < duration; t += b) {
+    const beatInBar = Math.round(t / b) % 4;
+
+    // Bass note on beat 1 of each bar
+    if (beatInBar === 0) {
+      const noteIdx = Math.round(t / (b * 4)) % bassNotes.length;
+      const freq = 440 * Math.pow(2, (bassNotes[noteIdx] - 69) / 12);
+      const bass = ctx.createOscillator();
+      const bassGain = ctx.createGain();
+      bass.type = 'sawtooth';
+      bass.frequency.setValueAtTime(freq, now + t);
+      bass.frequency.exponentialRampToValueAtTime(freq * 0.8, now + t + b * 3);
+      bassGain.gain.setValueAtTime(0.18, now + t);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, now + t + b * 3.8);
+      bass.connect(bassGain);
+      bassGain.connect(masterGain);
+      bass.start(now + t);
+      bass.stop(now + t + b * 4);
+    }
+
+    // Kick drum on selected 16th-note steps
+    for (let s = 0; s < 4; s++) {
+      const st = t + s * step;
+      if (st >= duration) break;
+      const stepInBar = (beatInBar * 4 + s) % 16;
+      if (kickPattern[stepInBar]) {
+        const kick = ctx.createOscillator();
+        const kickGain = ctx.createGain();
+        kick.type = 'sine';
+        kick.frequency.setValueAtTime(150, now + st);
+        kick.frequency.exponentialRampToValueAtTime(40, now + st + 0.12);
+        kickGain.gain.setValueAtTime(0.55, now + st);
+        kickGain.gain.exponentialRampToValueAtTime(0.001, now + st + 0.2);
+        kick.connect(kickGain);
+        kickGain.connect(masterGain);
+        kick.start(now + st);
+        kick.stop(now + st + 0.25);
+      }
+    }
+
+    // Snare on beats 2 and 4
+    if (beatInBar === 1 || beatInBar === 3) {
+      const snare = ctx.createOscillator();
+      const snareGain = ctx.createGain();
+      snare.type = 'sawtooth';
+      snare.frequency.setValueAtTime(220, now + t);
+      snareGain.gain.setValueAtTime(0.22, now + t);
+      snareGain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.1);
+      snare.connect(snareGain);
+      snareGain.connect(masterGain);
+      snare.start(now + t);
+      snare.stop(now + t + 0.12);
+    }
+
+    // Closed hi-hat on every 8th note
+    for (let h = 0; h < 2; h++) {
+      const ht = t + h * (b / 2);
+      if (ht >= duration) break;
+      const hat = ctx.createOscillator();
+      const hatGain = ctx.createGain();
+      hat.type = 'square';
+      hat.frequency.value = 8000 + Math.random() * 1000;
+      hatGain.gain.setValueAtTime(0.06, now + ht);
+      hatGain.gain.exponentialRampToValueAtTime(0.001, now + ht + 0.04);
+      hat.connect(hatGain);
+      hatGain.connect(masterGain);
+      hat.start(now + ht);
+      hat.stop(now + ht + 0.05);
+    }
+  }
+}
+
 // --- Main dispatcher ---
 function playSynthSong(bpm, duration, style) {
   if (!audioContext) createAudioContext();
@@ -1138,16 +1240,19 @@ function playSynthSong(bpm, duration, style) {
   masterGain.connect(audioContext.destination);
 
   if (songAudioBuffer) {
-    // Play Pixabay audio
+    // Play stored MP3 audio
     masterGain.gain.value = 0.7;
     playSongAudioBuffer(audioContext, masterGain, now, duration);
     scheduleBeatAccents(audioContext, masterGain, now, bpm, duration);
   } else if (style === 'custom' && customAudioBuffer) {
-    // Play real audio file
+    // Play user-uploaded audio file
     masterGain.gain.value = 0.7;
     playCustomAudio(audioContext, masterGain, now, duration);
     // Add beat accents on top for 卡点 feel
     scheduleBeatAccents(audioContext, masterGain, now, bpm, duration);
+  } else {
+    // No audio file available — fall back to synthetic drum-machine rhythm
+    playSyntheticRhythm(audioContext, masterGain, now, bpm, duration, style);
   }
 
   audioNodes.masterGain = masterGain;
