@@ -2170,7 +2170,14 @@ function endGame() {
   if (label) label.remove();
 
   // Calculate grade
-  const maxPossibleScore = beatMap.length * 1000 * 8; // all perfect with max multiplier
+  // Compute actual max possible score: perfect on every beat with realistic multiplier ramp-up
+  let maxPossibleScore = 0;
+  let perfectCombo = 0;
+  for (let i = 0; i < beatMap.length; i++) {
+    perfectCombo++;
+    const mult = Math.min(8, 1 + Math.floor(perfectCombo / 5));
+    maxPossibleScore += 1000 * mult;
+  }
   const percentage = maxPossibleScore > 0 ? score / maxPossibleScore : 0;
 
   let grade, gradeColor;
