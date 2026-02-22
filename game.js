@@ -646,7 +646,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'easy',
     style: 'synthpop',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/07/29/audio_4e09b35d5b.mp3',
+    audioUrl: 'audio/pop-dance-beat.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'easy', 'synthpop'); },
   },
   'tropical-house': {
@@ -655,7 +655,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'easy',
     style: 'lofi',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/03/26/audio_6846775846.mp3',
+    audioUrl: 'audio/tropical-house.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'easy', 'lofi'); },
   },
   'funky-groove': {
@@ -664,7 +664,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'easy',
     style: 'disco',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/09/24/audio_e4a5da2ff3.mp3',
+    audioUrl: 'audio/funky-groove.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'easy', 'disco'); },
   },
   'edm-drop': {
@@ -673,7 +673,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'medium',
     style: 'edm',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/06/06/audio_48e9cf2ffa.mp3',
+    audioUrl: 'audio/edm-drop.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'edm'); },
   },
   'house-beat': {
@@ -682,7 +682,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'medium',
     style: 'house',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/08/06/audio_69a61c5e14.mp3',
+    audioUrl: 'audio/house-beat.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'house'); },
   },
   'afrobeats-rhythm': {
@@ -691,7 +691,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'medium',
     style: 'hiphop',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/07/24/audio_e449d10473.mp3',
+    audioUrl: 'audio/afrobeats-rhythm.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'hiphop'); },
   },
   'upbeat-funk': {
@@ -700,7 +700,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'medium',
     style: 'future-bass',
-    audioUrl: 'https://cdn.pixabay.com/audio/2023/04/23/audio_87b3225287.mp3',
+    audioUrl: 'audio/upbeat-funk.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'future-bass'); },
   },
   'energetic-beat': {
@@ -709,7 +709,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'hard',
     style: 'edm',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/07/30/audio_13d732e545.mp3',
+    audioUrl: 'audio/energetic-beat.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'edm'); },
   },
   'dnb-breakbeat': {
@@ -718,7 +718,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'hard',
     style: 'dnb',
-    audioUrl: 'https://cdn.pixabay.com/audio/2023/10/24/audio_9408f7326a.mp3',
+    audioUrl: 'audio/dnb-breakbeat.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'dnb'); },
   },
   'high-energy-trap': {
@@ -727,7 +727,7 @@ const SONGS = {
     duration: 60,
     difficulty: 'hard',
     style: 'hiphop',
-    audioUrl: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3',
+    audioUrl: 'audio/high-energy-trap.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'hiphop'); },
   },
   'custom-audio': {
@@ -948,7 +948,7 @@ function createAudioContext() {
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
 }
 
-// ===== Pixabay Audio Loading =====
+// ===== Audio File Loading =====
 async function loadSongFromUrl(url) {
   songAudioBuffer = null;
   const response = await fetch(url);
@@ -1699,7 +1699,7 @@ async function startGame() {
   const song = SONGS[selectedSong];
   if (song.audioUrl) {
     loadingOverlay.classList.remove('hidden');
-    loadingText.textContent = 'Loading music from Pixabay...';
+    loadingText.textContent = 'Loading music...';
     try {
       await loadSongFromUrl(song.audioUrl);
       // Use actual audio duration if shorter than configured
