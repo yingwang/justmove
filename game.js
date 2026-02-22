@@ -479,7 +479,7 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 
   // --- Neck ---
   const headX = cx * w;
-  const neckTopY = headY * h + 50;
+  const neckTopY = headY * h + 65;
   const neckBotY = shoulderY * h;
   solidLimb(headX, neckTopY, headX, neckBotY, 18);
 
@@ -551,9 +551,9 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     ctx.beginPath(); ctx.ellipse(fx, fy, 22, 13, 0, 0, Math.PI * 2); ctx.fill();
   }
 
-  // --- Cute Head (42x50 radius) ---
+  // --- Cute Head (55x65 radius) ---
   const headCY = headY * h;
-  const headRx = 42, headRy = 50;
+  const headRx = 55, headRy = 65;
 
   // Head border
   ctx.save();
@@ -578,7 +578,7 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.85)`;
   ctx.lineWidth = 3; ctx.lineCap = 'round';
   for (let i = -5; i <= 5; i++) {
-    const hx = headX + i * 7;
+    const hx = headX + i * 9;
     const hy = headCY - headRy - 1;
     ctx.beginPath();
     ctx.moveTo(hx, hy + 8);
@@ -589,15 +589,15 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   // Ears (round, solid)
   const earY = headCY - 1;
   for (const side of [-1, 1]) {
-    const earCx = headX + side * (headRx + 6);
+    const earCx = headX + side * (headRx + 8);
     ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.8)`;
-    ctx.beginPath(); ctx.arc(earCx, earY, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(earCx, earY, 12, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
-    ctx.beginPath(); ctx.arc(earCx, earY, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(earCx, earY, 10, 0, Math.PI * 2); ctx.fill();
   }
 
   // Big cute eyes (solid white with large pupils)
-  const eyeOffX = 14, eyeOffY = -4, eyeW = 10, eyeH = 8;
+  const eyeOffX = 18, eyeOffY = -5, eyeW = 13, eyeH = 10;
   // Eye whites
   ctx.fillStyle = 'rgb(255, 255, 255)';
   ctx.beginPath(); ctx.ellipse(headX - eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
@@ -609,28 +609,28 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.beginPath(); ctx.ellipse(headX + eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
   // Large pupils
   ctx.fillStyle = `rgb(${darkR}, ${darkG}, ${darkB})`;
-  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, 4.5, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, 4.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, 6, 0, Math.PI * 2); ctx.fill();
   // Eye sparkle
   ctx.fillStyle = 'rgb(255, 255, 255)';
-  ctx.beginPath(); ctx.arc(headX - eyeOffX + 2.5, headCY + eyeOffY - 2.5, 2, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(headX + eyeOffX + 2.5, headCY + eyeOffY - 2.5, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX - eyeOffX + 3, headCY + eyeOffY - 3, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX + eyeOffX + 3, headCY + eyeOffY - 3, 2.5, 0, Math.PI * 2); ctx.fill();
 
   // Nose (white highlight to stand out against any character color)
   ctx.fillStyle = `rgba(255, 255, 255, 0.55)`;
-  ctx.beginPath(); ctx.arc(headX, headCY + 7, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX, headCY + 9, 4, 0, Math.PI * 2); ctx.fill();
 
   // Mouth (cute smile arc)
   ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.8)`;
   ctx.lineWidth = 2.5; ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.arc(headX, headCY + 16, 10, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.arc(headX, headCY + 21, 13, 0.15 * Math.PI, 0.85 * Math.PI);
   ctx.stroke();
 
   // Blush (cute rosy cheeks)
   ctx.fillStyle = 'rgba(255, 150, 180, 0.35)';
-  ctx.beginPath(); ctx.ellipse(headX - 25, headCY + 8, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(headX + 25, headCY + 8, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(headX - 33, headCY + 10, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(headX + 33, headCY + 10, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
 }
 
 // ===== Song / Beat Map Definitions =====
@@ -2183,13 +2183,19 @@ function drawNeonBody(ctx, landmarks, w, h) {
   // --- Filled rounded torso (cute body shape) ---
   const lShoulder = landmarks[11], rShoulder = landmarks[12];
   const lHip = landmarks[23], rHip = landmarks[24];
-  if (lShoulder && rShoulder && lHip && rHip &&
-      lShoulder.visibility > 0.5 && rShoulder.visibility > 0.5 &&
-      lHip.visibility > 0.5 && rHip.visibility > 0.5) {
+  const shouldersVisible = lShoulder && rShoulder &&
+      lShoulder.visibility > 0.5 && rShoulder.visibility > 0.5;
+  const hipsVisible = lHip && rHip &&
+      lHip.visibility > 0.5 && rHip.visibility > 0.5;
+  if (shouldersVisible) {
     const lsx = lShoulder.x * w, lsy = lShoulder.y * h;
     const rsx = rShoulder.x * w, rsy = rShoulder.y * h;
-    const lhx = lHip.x * w, lhy = lHip.y * h;
-    const rhx = rHip.x * w, rhy = rHip.y * h;
+    // Estimate hips from shoulders when not detected (e.g. person too close)
+    const shoulderWidth = Math.abs(rsx - lsx);
+    const lhx = hipsVisible ? lHip.x * w : lsx + shoulderWidth * 0.05;
+    const lhy = hipsVisible ? lHip.y * h : Math.min(lsy + shoulderWidth * 1.8, h);
+    const rhx = hipsVisible ? rHip.x * w : rsx - shoulderWidth * 0.05;
+    const rhy = hipsVisible ? rHip.y * h : Math.min(rsy + shoulderWidth * 1.8, h);
     const pad = 10;
 
     ctx.save();
@@ -2315,7 +2321,7 @@ function drawNeonBody(ctx, landmarks, w, h) {
   if (lShoulder && rShoulder && nose &&
       lShoulder.visibility > 0.5 && rShoulder.visibility > 0.5 && nose.visibility > 0.5) {
     const neckTopX = nose.x * w;
-    const neckTopY = nose.y * h + 30;
+    const neckTopY = nose.y * h + 40;
     const neckBotX = (lShoulder.x + rShoulder.x) / 2 * w;
     const neckBotY = (lShoulder.y + rShoulder.y) / 2 * h;
     drawNeonLimb(ctx, neckTopX, neckTopY, neckBotX, neckBotY, 20, color, glowIntensity);
@@ -2324,7 +2330,7 @@ function drawNeonBody(ctx, landmarks, w, h) {
   // --- Cute head with facial features ---
   if (nose && nose.visibility > 0.5) {
     const hx = nose.x * w, hy = nose.y * h;
-    const headRx = 42, headRy = 50;
+    const headRx = 55, headRy = 65;
 
     // Subtle glow behind head
     ctx.save();
@@ -2358,7 +2364,7 @@ function drawNeonBody(ctx, landmarks, w, h) {
     ctx.strokeStyle = `rgba(${Math.max(0, r - 40)}, ${Math.max(0, g - 40)}, ${Math.max(0, b - 40)}, 0.85)`;
     ctx.lineWidth = 3.5; ctx.lineCap = 'round';
     for (let i = -5; i <= 5; i++) {
-      const hairX = hx + i * 7;
+      const hairX = hx + i * 9;
       const hairY = hy - headRy - 1;
       ctx.beginPath();
       ctx.moveTo(hairX, hairY + 8);
@@ -2369,22 +2375,22 @@ function drawNeonBody(ctx, landmarks, w, h) {
     // Ears (round, solid)
     const earY = hy - 1;
     for (const side of [-1, 1]) {
-      const earCx = hx + side * (headRx + 6);
+      const earCx = hx + side * (headRx + 8);
       // Ear border
       ctx.fillStyle = `rgba(${Math.max(0, r - 80)}, ${Math.max(0, g - 80)}, ${Math.max(0, b - 80)}, 0.8)`;
       ctx.beginPath();
-      ctx.arc(earCx, earY, 10, 0, Math.PI * 2);
+      ctx.arc(earCx, earY, 12, 0, Math.PI * 2);
       ctx.fill();
       // Ear fill
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
       ctx.beginPath();
-      ctx.arc(earCx, earY, 8, 0, Math.PI * 2);
+      ctx.arc(earCx, earY, 10, 0, Math.PI * 2);
       ctx.fill();
     }
 
     // Big cute eyes (larger for chibi look)
     const lEye = landmarks[2], rEye = landmarks[5];
-    const eyeW = 10, eyeH = 8;
+    const eyeW = 13, eyeH = 10;
     if (lEye && rEye && lEye.visibility > 0.4 && rEye.visibility > 0.4) {
       const lex = lEye.x * w, ley = lEye.y * h;
       const rex = rEye.x * w, rey = rEye.y * h;
@@ -2399,33 +2405,33 @@ function drawNeonBody(ctx, landmarks, w, h) {
       ctx.beginPath(); ctx.ellipse(rex, rey, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
       // Big pupils
       ctx.fillStyle = `rgb(${Math.max(0, r - 60)}, ${Math.max(0, g - 60)}, ${Math.max(0, b - 60)})`;
-      ctx.beginPath(); ctx.arc(lex, ley, 4.5, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(rex, rey, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(lex, ley, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(rex, rey, 6, 0, Math.PI * 2); ctx.fill();
       // Eye sparkle (bigger)
       ctx.fillStyle = 'rgb(255, 255, 255)';
-      ctx.beginPath(); ctx.arc(lex + 2.5, ley - 2.5, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(rex + 2.5, rey - 2.5, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(lex + 3, ley - 3, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(rex + 3, rey - 3, 2.5, 0, Math.PI * 2); ctx.fill();
     } else {
       // Fallback eyes at estimated positions
       ctx.fillStyle = 'rgb(255, 255, 255)';
-      ctx.beginPath(); ctx.ellipse(hx - 14, hy - 6, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(hx + 14, hy - 6, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(hx - 18, hy - 8, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(hx + 18, hy - 8, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = `rgba(${Math.max(0, r - 80)}, ${Math.max(0, g - 80)}, ${Math.max(0, b - 80)}, 0.7)`;
       ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.ellipse(hx - 14, hy - 6, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(hx + 14, hy - 6, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(hx - 18, hy - 8, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(hx + 18, hy - 8, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = `rgb(${Math.max(0, r - 60)}, ${Math.max(0, g - 60)}, ${Math.max(0, b - 60)})`;
-      ctx.beginPath(); ctx.arc(hx - 14, hy - 6, 4.5, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(hx + 14, hy - 6, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx - 18, hy - 8, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx + 18, hy - 8, 6, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgb(255, 255, 255)';
-      ctx.beginPath(); ctx.arc(hx - 12, hy - 8, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(hx + 16, hy - 8, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx - 16, hy - 10, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx + 20, hy - 10, 2.5, 0, Math.PI * 2); ctx.fill();
     }
 
     // Nose (small triangle, cuter)
     ctx.fillStyle = `rgba(255, 255, 255, ${0.55 * glowIntensity})`;
     ctx.beginPath();
-    ctx.arc(hx, hy + 7, 3, 0, Math.PI * 2);
+    ctx.arc(hx, hy + 9, 4, 0, Math.PI * 2);
     ctx.fill();
 
     // Mouth (cute smile arc, thicker)
@@ -2437,18 +2443,18 @@ function drawNeonBody(ctx, landmarks, w, h) {
       const my = (mouthL.y + mouthR.y) / 2 * h;
       const mw = Math.abs(mouthR.x - mouthL.x) * w / 2;
       ctx.beginPath();
-      ctx.arc(mx, my, Math.max(mw, 10), 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.arc(mx, my, Math.max(mw, 13), 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     } else {
       ctx.beginPath();
-      ctx.arc(hx, hy + 16, 10, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.arc(hx, hy + 21, 13, 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     }
 
     // Blush (cute rosy cheeks, bigger and more visible)
     ctx.fillStyle = `rgba(255, 150, 180, ${0.35 * glowIntensity})`;
-    ctx.beginPath(); ctx.ellipse(hx - 25, hy + 8, 11, 6, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(hx + 25, hy + 8, 11, 6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(hx - 33, hy + 10, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(hx + 33, hy + 10, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
   }
 }
 
