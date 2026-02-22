@@ -599,6 +599,22 @@ const SONGS = {
     style: 'reggaeton',
     generateBeats() { return generateStructuredBeatMap(110, 60, 'medium', 'reggaeton'); },
   },
+  'hiphop-cypher': {
+    name: 'Hip-Hop Cypher',
+    bpm: 95,
+    duration: 60,
+    difficulty: 'medium',
+    style: 'hiphop',
+    generateBeats() { return generateStructuredBeatMap(95, 60, 'medium', 'hiphop'); },
+  },
+  'house-party': {
+    name: 'House Party',
+    bpm: 124,
+    duration: 60,
+    difficulty: 'medium',
+    style: 'house',
+    generateBeats() { return generateStructuredBeatMap(124, 60, 'medium', 'house'); },
+  },
 };
 
 // --- Song structure: each song has sections (intro, verse, chorus, drop, etc.) ---
@@ -615,14 +631,28 @@ function generateStructuredBeatMap(bpm, duration, difficulty, style) {
   const densityMap = { easy: 1, medium: 2, hard: 3 };
   const density = densityMap[difficulty] || 1;
 
-  // Choreography patterns: flowing sequences of poses
+  // AIST++ dataset-inspired choreography patterns
+  // Maps dance genres from AIST++ (breaking, pop, lock, hip-hop, house, waack, krump, street jazz, ballet jazz)
+  // to the game's pose system for authentic dance sequences
   const choreo = {
-    wave: ['left-arm-up', 'arms-up', 'right-arm-up', 'arms-up'],
-    sway: ['lean-left', 'arms-out', 'lean-right', 'arms-out'],
-    dab: ['dab-left', 'arms-up', 'dab-right', 'arms-up'],
-    power: ['squat', 'arms-up', 'hands-on-hips', 'arms-out'],
-    groove: ['lean-left', 'squat', 'lean-right', 'arms-up'],
-    hype: ['arms-up', 'dab-right', 'arms-up', 'dab-left'],
+    // Breaking-inspired: power moves with level changes
+    breaking: ['squat', 'arms-out', 'arms-up', 'squat', 'lean-left', 'arms-up', 'lean-right', 'squat'],
+    // Pop/lock-inspired: sharp isolations and hits
+    pop: ['arms-out', 'arms-up', 'hands-on-hips', 'arms-out', 'right-arm-up', 'arms-out', 'left-arm-up', 'arms-out'],
+    // Hip-hop-inspired: bounce and groove
+    hiphop: ['squat', 'arms-up', 'hands-on-hips', 'lean-left', 'squat', 'arms-up', 'hands-on-hips', 'lean-right'],
+    // House-inspired: fluid footwork and jacking
+    house: ['squat', 'arms-up', 'lean-left', 'arms-out', 'squat', 'arms-up', 'lean-right', 'arms-out'],
+    // Waack-inspired: dramatic arm movements
+    waack: ['right-arm-up', 'arms-out', 'left-arm-up', 'arms-up', 'dab-right', 'arms-out', 'dab-left', 'arms-up'],
+    // Krump-inspired: aggressive energy and chest pops
+    krump: ['arms-up', 'squat', 'dab-right', 'arms-up', 'squat', 'dab-left', 'arms-up', 'hands-on-hips'],
+    // Street jazz-inspired: expressive full-body
+    jazz: ['lean-left', 'arms-up', 'lean-right', 'dab-left', 'lean-left', 'arms-up', 'lean-right', 'dab-right'],
+    // Wave flow: smooth transitions
+    wave: ['left-arm-up', 'arms-up', 'right-arm-up', 'arms-out', 'left-arm-up', 'arms-up', 'right-arm-up', 'hands-on-hips'],
+    // Hype: audience engagement moves
+    hype: ['arms-up', 'dab-right', 'arms-up', 'dab-left', 'arms-up', 'hands-on-hips', 'arms-up', 'squat'],
   };
   const choreoKeys = Object.keys(choreo);
 
@@ -634,14 +664,26 @@ function generateStructuredBeatMap(bpm, duration, difficulty, style) {
     const sectionStart = section.start;
     const sectionEnd = section.start + section.duration;
 
-    // Pick a choreography pattern for this section
+    // Pick AIST++ choreography pattern matched to music style and section energy
     if (section.type === 'chorus' || section.type === 'drop') {
-      currentChoreo = choreo.hype;
+      // High energy: use style-matched intense choreography
+      const dropMap = {
+        'synthpop': choreo.pop, 'edm': choreo.hype, 'dnb': choreo.krump,
+        'lofi': choreo.wave, 'future-bass': choreo.waack, 'disco': choreo.jazz,
+        'darksynth': choreo.krump, 'reggaeton': choreo.hiphop,
+        'hiphop': choreo.hiphop, 'house': choreo.house,
+      };
+      currentChoreo = dropMap[style] || choreo.hype;
     } else if (section.type === 'verse') {
-      currentChoreo = choreo[choreoKeys[choreoIdx % choreoKeys.length]];
+      // Moderate energy: cycle through AIST++ patterns
+      const versePatterns = [choreo.wave, choreo.pop, choreo.house, choreo.jazz];
+      currentChoreo = versePatterns[choreoIdx % versePatterns.length];
       choreoIdx++;
     } else if (section.type === 'breakdown') {
-      currentChoreo = choreo.sway;
+      currentChoreo = choreo.wave;
+    } else if (section.type === 'buildup') {
+      // Building energy: use progressive patterns
+      currentChoreo = choreo.pop;
     }
 
     // Determine beat placement based on section type
@@ -719,7 +761,7 @@ function generateStructuredBeatMap(bpm, duration, difficulty, style) {
 function buildSongSections(duration, bar, style) {
   // Build a dynamic arrangement
   const sections = [];
-  if (style === 'edm' || style === 'future-bass') {
+  if (style === 'edm' || style === 'future-bass' || style === 'house') {
     // EDM structure: intro → buildup → drop → breakdown → buildup → drop → outro
     sections.push({ type: 'intro', start: 0, duration: bar * 2 });
     sections.push({ type: 'verse', start: bar * 2, duration: bar * 4 });
@@ -736,7 +778,7 @@ function buildSongSections(duration, bar, style) {
     } else if (remaining > 0) {
       sections.push({ type: 'outro', start: bar * 20, duration: remaining });
     }
-  } else if (style === 'dnb' || style === 'darksynth') {
+  } else if (style === 'dnb' || style === 'darksynth' || style === 'hiphop') {
     // High energy: short intro → verse → drop → breakdown → drop → outro
     sections.push({ type: 'intro', start: 0, duration: bar * 2 });
     sections.push({ type: 'buildup', start: bar * 2, duration: bar * 2 });
@@ -1126,6 +1168,11 @@ function playSynthpop(ctx, master, now, bpm, dur) {
   }
   let ct = 0, ci = 0;
   while (ct < dur) { synthChord(ctx, master, now, ct, chords[ci % chords.length], b * 4); ct += b * 4; ci++; }
+  // AIST++ beat-synced vocal hits
+  for (let t = 0; t < dur; t += b * 8) {
+    synthShout(ctx, master, now, t, 220, 0.1);
+    synthVocalPhrase(ctx, master, now, t + b * 4, 330, b * 2, ['o', 'a'], 0.07);
+  }
 }
 
 function playEdm(ctx, master, now, bpm, dur) {
@@ -1159,6 +1206,12 @@ function playEdm(ctx, master, now, bpm, dur) {
     synthChord(ctx, master, now, ct, chords[ci % chords.length], b * 3.5, 'sawtooth', 0.025);
     ct += b * 4; ci++;
   }
+  // AIST++ beat-synced vocal drops and chants
+  for (let t = 0; t < dur; t += b * 8) {
+    synthShout(ctx, master, now, t, 200, 0.12);
+    synthShout(ctx, master, now, t + b * 4, 250, 0.1);
+    synthVocalPhrase(ctx, master, now, t + b * 2, 300, b * 2, ['e', 'a', 'o'], 0.06);
+  }
 }
 
 function playDnb(ctx, master, now, bpm, dur) {
@@ -1188,6 +1241,13 @@ function playDnb(ctx, master, now, bpm, dur) {
     const nd = b * (Math.random() > 0.6 ? 0.25 : 0.5);
     synthNote(ctx, master, now, lt, leadNotes[Math.floor(Math.random() * leadNotes.length)], nd, 'square', 0.04);
     lt += nd;
+  }
+  // AIST++ vocal energy hits
+  for (let t = 0; t < dur; t += b * 4) {
+    synthShout(ctx, master, now, t, 180, 0.1);
+    if (Math.floor(t / (b * 8)) % 2 === 0) {
+      synthVocalPhrase(ctx, master, now, t + b * 2, 280, b, ['a', 'e'], 0.06);
+    }
   }
 }
 
@@ -1231,6 +1291,10 @@ function playLofi(ctx, master, now, bpm, dur) {
       synthNote(ctx, master, now, mt, pentatonic[Math.floor(Math.random() * pentatonic.length)], b * 1.5, 'sine', 0.05);
     }
     mt += b * (Math.random() > 0.5 ? 2 : 1);
+  }
+  // Soft vocal hums for AIST++ vibe
+  for (let t = 0; t < dur; t += b * 16) {
+    synthVocalPhrase(ctx, master, now, t + b * 2, 220, b * 4, ['u', 'o', 'a', 'o'], 0.04);
   }
 }
 
@@ -1286,6 +1350,12 @@ function playFutureBass(ctx, master, now, bpm, dur) {
     }
     lt += b * 0.5;
   }
+  // AIST++ vocal chops on drops
+  for (let t = 0; t < dur; t += b * 4) {
+    synthShout(ctx, master, now, t, 260, 0.1);
+    synthVocal(ctx, master, now, t + b, 330, b * 0.5, 'a', 0.07);
+    synthVocal(ctx, master, now, t + b * 2, 350, b * 0.5, 'o', 0.07);
+  }
 }
 
 function playDisco(ctx, master, now, bpm, dur) {
@@ -1332,6 +1402,12 @@ function playDisco(ctx, master, now, bpm, dur) {
     synthChord(ctx, master, now, st, strings, b * 8, 'sine', 0.03);
     st += b * 8;
   }
+  // Disco vocal call-and-response
+  for (let t = 0; t < dur; t += b * 8) {
+    synthShout(ctx, master, now, t, 300, 0.1);
+    synthVocalPhrase(ctx, master, now, t + b * 2, 350, b * 2, ['a', 'o', 'a'], 0.06);
+    synthShout(ctx, master, now, t + b * 4, 280, 0.08);
+  }
 }
 
 function playDarksynth(ctx, master, now, bpm, dur) {
@@ -1370,6 +1446,11 @@ function playDarksynth(ctx, master, now, bpm, dur) {
     const pool = [...chords[ci2], ...leadNotes.slice(0, 3)];
     synthNote(ctx, master, now, lt, pool[Math.floor(Math.random() * pool.length)], b * 0.2, 'sawtooth', 0.045);
     lt += b * 0.25;
+  }
+  // Dark vocal stabs
+  for (let t = 0; t < dur; t += b * 8) {
+    synthShout(ctx, master, now, t, 150, 0.12);
+    synthVocal(ctx, master, now, t + b * 4, 180, b, 'o', 0.08);
   }
 }
 
@@ -1422,6 +1503,123 @@ function playReggaeton(ctx, master, now, bpm, dur) {
     }
     mt += b;
   }
+  // Reggaeton vocal hooks - "hey!" and chants
+  for (let t = 0; t < dur; t += b * 4) {
+    synthShout(ctx, master, now, t, 250, 0.12);
+    synthVocalPhrase(ctx, master, now, t + b * 2, 320, b, ['e', 'a'], 0.08);
+  }
+}
+
+function playHiphop(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  const bassNotes = [55.0, 61.74, 49.0, 65.41]; // A1, B1, G1, C2
+  const chords = [
+    [220.0, 277.18, 329.63],  // Am
+    [196.0, 246.94, 293.66],  // Gm
+    [261.63, 329.63, 392.0],  // C
+    [233.08, 293.66, 349.23], // Bb
+  ];
+  const melodyNotes = [440.0, 493.88, 523.25, 587.33, 659.25];
+
+  // Boom-bap kick pattern
+  for (let bar = 0; bar < dur; bar += b * 4) {
+    synthKick(ctx, master, now, bar, 150, 0.45);
+    synthKick(ctx, master, now, bar + b * 1.75, 150, 0.35);
+    synthKick(ctx, master, now, bar + b * 2.5, 150, 0.4);
+  }
+  // Snare on 2 and 4
+  for (let t = b; t < dur; t += b * 2) synthSnare(ctx, master, now, t, 0.3);
+  // Tight hi-hats with swing
+  for (let t = 0; t < dur; t += b / 2) {
+    const swing = (Math.floor(t / (b / 2)) % 2 === 1) ? b * 0.08 : 0;
+    synthHihat(ctx, master, now, t + swing, 0.05, 0.03);
+  }
+  // Open hat accents
+  for (let t = b * 1.5; t < dur; t += b * 4) synthOpenHat(ctx, master, now, t, 0.08);
+  // Deep 808 bass
+  for (let t = 0; t < dur; t += b * 2) {
+    const f = bassNotes[Math.floor(t / (b * 8)) % bassNotes.length];
+    synthSlideBass(ctx, master, now, t, f, f * 0.8, b * 1.5, 'triangle', 0.18);
+  }
+  // Pad chords
+  let ct = 0, ci = 0;
+  while (ct < dur) {
+    synthChord(ctx, master, now, ct, chords[ci % chords.length], b * 3.5, 'triangle', 0.03);
+    ct += b * 4; ci++;
+  }
+  // Sparse melodic hits
+  let mt = 0;
+  while (mt < dur) {
+    if (Math.random() > 0.4) {
+      synthNote(ctx, master, now, mt, melodyNotes[Math.floor(Math.random() * melodyNotes.length)], b * 0.3, 'sine', 0.05);
+    }
+    mt += b;
+  }
+  // AIST++ vocal hooks - call and response
+  for (let t = 0; t < dur; t += b * 4) {
+    synthShout(ctx, master, now, t, 220, 0.14);
+    synthVocalPhrase(ctx, master, now, t + b * 2, 280, b * 1.5, ['e', 'a', 'o'], 0.09);
+  }
+  // Vocal ad-libs on drops
+  for (let t = 0; t < dur; t += b * 16) {
+    synthVocalPhrase(ctx, master, now, t + b * 8, 350, b * 2, ['a', 'i', 'e', 'a'], 0.07);
+  }
+}
+
+function playHouse(ctx, master, now, bpm, dur) {
+  const b = 60 / bpm;
+  const bassNotes = [65.41, 73.42, 82.41, 87.31]; // C2, D2, E2, F2
+  const chords = [
+    [261.63, 329.63, 392.0],  // C
+    [293.66, 369.99, 440.0],  // Dm
+    [349.23, 440.0, 523.25],  // F
+    [392.0, 493.88, 587.33],  // G
+  ];
+
+  // Four-on-the-floor house kick
+  for (let t = 0; t < dur; t += b) synthKick(ctx, master, now, t, 135, 0.4);
+  // Clap on 2 & 4
+  for (let t = b; t < dur; t += b * 2) synthClap(ctx, master, now, t, 0.22);
+  // Shuffled hi-hats
+  for (let t = 0; t < dur; t += b / 2) {
+    const accent = (Math.floor(t / (b / 2)) % 4 === 2) ? 0.08 : 0.05;
+    synthHihat(ctx, master, now, t, accent, 0.04);
+  }
+  // Open hat on offbeats
+  for (let t = b / 2; t < dur; t += b * 2) synthOpenHat(ctx, master, now, t, 0.07);
+  // Pumping bass
+  for (let t = 0; t < dur; t += b) {
+    const f = bassNotes[Math.floor(t / (b * 4)) % bassNotes.length];
+    synthBass(ctx, master, now, t, f, b * 0.6, 'sawtooth', 0.15);
+  }
+  // Stab chords (classic house)
+  let ct = 0, ci = 0;
+  while (ct < dur) {
+    const ch = chords[ci % chords.length];
+    synthChord(ctx, master, now, ct, ch, b * 0.3, 'sawtooth', 0.04);
+    synthChord(ctx, master, now, ct + b * 1.5, ch, b * 0.25, 'sawtooth', 0.035);
+    synthChord(ctx, master, now, ct + b * 3, ch, b * 0.3, 'sawtooth', 0.04);
+    ct += b * 4; ci++;
+  }
+  // Piano-style melody
+  const melodyNotes = [523.25, 587.33, 659.25, 698.46, 783.99];
+  let mt = 0;
+  while (mt < dur) {
+    if (Math.random() > 0.3) {
+      synthNote(ctx, master, now, mt, melodyNotes[Math.floor(Math.random() * melodyNotes.length)], b * 0.4, 'triangle', 0.045);
+    }
+    mt += b * 0.5;
+  }
+  // House vocal chants - "oh yeah" style
+  for (let t = 0; t < dur; t += b * 8) {
+    synthShout(ctx, master, now, t, 280, 0.12);
+    synthVocalPhrase(ctx, master, now, t + b * 2, 330, b * 3, ['o', 'a', 'e', 'a', 'o', 'u'], 0.08);
+  }
+  // Call-response vocals
+  for (let t = b * 4; t < dur; t += b * 8) {
+    synthVocalPhrase(ctx, master, now, t, 350, b * 2, ['a', 'i', 'a'], 0.07);
+    synthShout(ctx, master, now, t + b * 3, 300, 0.1);
+  }
 }
 
 // --- Main dispatcher ---
@@ -1443,6 +1641,8 @@ function playSynthSong(bpm, duration, style) {
     case 'disco':       playDisco(audioContext, masterGain, now, bpm, duration); break;
     case 'darksynth':   playDarksynth(audioContext, masterGain, now, bpm, duration); break;
     case 'reggaeton':   playReggaeton(audioContext, masterGain, now, bpm, duration); break;
+    case 'hiphop':      playHiphop(audioContext, masterGain, now, bpm, duration); break;
+    case 'house':       playHouse(audioContext, masterGain, now, bpm, duration); break;
     default:            playSynthpop(audioContext, masterGain, now, bpm, duration); break;
   }
 
