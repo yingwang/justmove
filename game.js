@@ -1751,6 +1751,7 @@ function onPoseResults(results) {
 }
 
 // --- Cute chibi body rendering (Just Dance style) ---
+// Arms and legs only (torso is drawn separately as a filled shape)
 const LIMB_SEGMENTS = [
   // Left arm
   [11, 13], [13, 15],
@@ -1761,6 +1762,8 @@ const LIMB_SEGMENTS = [
   // Right leg
   [24, 26], [26, 28],
 ];
+
+const DEFAULT_LIMB_WIDTH = 12;
 
 const LIMB_WIDTHS = {
   '11-13': 14, '13-15': 12, // left arm (thick & stubby)
@@ -1885,7 +1888,7 @@ function drawNeonBody(ctx, landmarks, w, h) {
     const b = landmarks[j];
     if (!a || !b || a.visibility < 0.5 || b.visibility < 0.5) continue;
     const key = `${Math.min(i, j)}-${Math.max(i, j)}`;
-    const baseWidth = LIMB_WIDTHS[key] || 12;
+    const baseWidth = LIMB_WIDTHS[key] || DEFAULT_LIMB_WIDTH;
     drawNeonLimb(ctx, a.x * w, a.y * h, b.x * w, b.y * h, baseWidth, color, glowIntensity);
   }
 
