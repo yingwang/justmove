@@ -419,7 +419,7 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     ctx.lineWidth = width * 0.35; ctx.stroke();
   }
 
-  // Head (human-like oval with facial features)
+  // Head (human-like shape with facial features)
   const headX = cx * w;
   const headCY = headY * h;
   const headRx = 16, headRy = 20;
@@ -429,35 +429,89 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.translate(headX, headCY);
   ctx.scale(1, headRy / headRx);
   const headGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, headRx * 1.8);
-  headGrad.addColorStop(0, `rgba(255, 255, 255, ${0.4 * pulse})`);
-  headGrad.addColorStop(0.35, `rgba(${color.r}, ${color.g}, ${color.b}, 0.6)`);
+  headGrad.addColorStop(0, `rgba(255, 255, 255, ${0.15 * pulse})`);
+  headGrad.addColorStop(0.35, `rgba(${color.r}, ${color.g}, ${color.b}, 0.3)`);
   headGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = headGrad;
   ctx.beginPath(); ctx.arc(0, 0, headRx * 1.8, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
-  // Solid head shape
+  // Head outline (oval, not filled dot)
   ctx.save();
   ctx.translate(headX, headCY);
   ctx.scale(1, headRy / headRx);
-  ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.25)`;
-  ctx.beginPath(); ctx.arc(0, 0, headRx, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.85)`;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(0, 0, headRx, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.08)`;
+  ctx.fill();
   ctx.restore();
 
-  // Eyes
-  const eyeOffX = 6, eyeOffY = -3, eyeR = 2.2;
+  // Hair (short strokes on top of head)
+  ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.7)`;
+  ctx.lineWidth = 2; ctx.lineCap = 'round';
+  for (let i = -3; i <= 3; i++) {
+    const hx = headX + i * 4;
+    const hy = headCY - headRy - 1;
+    ctx.beginPath();
+    ctx.moveTo(hx, hy + 4);
+    ctx.quadraticCurveTo(hx + i * 0.8, hy - 4, hx + i * 1.5, hy - 1);
+    ctx.stroke();
+  }
+
+  // Ears
+  const earY = headCY - 1;
+  ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.7)`;
+  ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+  // Left ear
+  ctx.beginPath();
+  ctx.arc(headX - headRx - 3, earY, 4, 0.3 * Math.PI, 1.7 * Math.PI);
+  ctx.stroke();
+  // Right ear
+  ctx.beginPath();
+  ctx.arc(headX + headRx + 3, earY, 4, 1.3 * Math.PI, 0.7 * Math.PI);
+  ctx.stroke();
+
+  // Eyes (almond-shaped)
+  const eyeOffX = 6, eyeOffY = -2, eyeW = 3.5, eyeH = 2;
   ctx.fillStyle = `rgba(255, 255, 255, ${0.85 * pulse})`;
-  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, eyeR, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, eyeR, 0, Math.PI * 2); ctx.fill();
+  // Left eye
+  ctx.beginPath();
+  ctx.ellipse(headX - eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Right eye
+  ctx.beginPath();
+  ctx.ellipse(headX + eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Pupils
+  ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.9)`;
+  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, 1.2, 0, Math.PI * 2); ctx.fill();
+
+  // Nose (small V-shape, not a dot)
+  ctx.beginPath();
+  ctx.moveTo(headX, headCY + 1);
+  ctx.lineTo(headX - 2, headCY + 5);
+  ctx.lineTo(headX + 2, headCY + 5);
+  ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 * pulse})`;
+  ctx.lineWidth = 1.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.stroke();
 
   // Mouth (small smile arc)
   ctx.beginPath();
-  ctx.arc(headX, headCY + 7, 5, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.arc(headX, headCY + 9, 5, 0.15 * Math.PI, 0.85 * Math.PI);
   ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
   ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.stroke();
 
+  // Neck (connects bottom of head oval to top of spine)
+  const neckTop = headCY + headRy;
+  const neckOffset = 0.06;
+  const neckBottom = (headY + neckOffset) * h;
+  glowLine(headX - 4, neckTop, headX - 4, neckBottom, 4);
+  glowLine(headX + 4, neckTop, headX + 4, neckBottom, 4);
+
   // Spine
-  glowLine(cx * w, (headY + 0.06) * h, (cx + bodyTilt) * w, hipY * h, 8);
+  glowLine(cx * w, neckBottom, (cx + bodyTilt) * w, hipY * h, 8);
 
   // Shoulders
   glowLine(lShoulderX * w, shoulderY * h, rShoulderX * w, shoulderY * h, 8);
