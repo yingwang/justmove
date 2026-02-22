@@ -34,7 +34,7 @@ let holistic = null;
 let camera = null;
 let currentPoseLandmarks = null;
 let gameState = 'menu'; // menu, countdown, playing, results
-let selectedSong = 'electric-dreams';
+let selectedSong = 'pop-dance-beat';
 let audioContext = null;
 let gameStartTime = 0;
 let lastFrameTime = 0;
@@ -636,95 +636,95 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 // ===== Song / Beat Map Definitions =====
 // Audio from Pixabay (https://pixabay.com/music/) — free to use under the Pixabay Content License
 const SONGS = {
-  'electric-dreams': {
-    name: 'Electric Dreams',
+  'pop-dance-beat': {
+    name: 'Pop Dance Beat',
     bpm: 120,
     duration: 60,
     difficulty: 'easy',
     style: 'synthpop',
-    audioUrl: 'https://cdn.pixabay.com/audio/2022/05/13/audio_c6c2d84ed3.mp3',
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/11/29/audio_90a07a6412.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'easy', 'synthpop'); },
   },
-  'neon-nights': {
-    name: 'Neon Nights',
-    bpm: 140,
-    duration: 60,
-    difficulty: 'medium',
-    style: 'edm',
-    audioUrl: 'https://cdn.pixabay.com/audio/2023/02/13/audio_04752d5da3.mp3',
-    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'edm'); },
-  },
-  'cyber-funk': {
-    name: 'Cyber Funk',
-    bpm: 160,
-    duration: 60,
-    difficulty: 'hard',
-    style: 'dnb',
-    audioUrl: 'https://cdn.pixabay.com/audio/2023/03/11/audio_27b15d33b9.mp3',
-    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'dnb'); },
-  },
-  'sunset-groove': {
-    name: 'Sunset Groove',
-    bpm: 100,
+  'tropical-house': {
+    name: 'Tropical House',
+    bpm: 110,
     duration: 60,
     difficulty: 'easy',
     style: 'lofi',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/06/03/audio_b7b75975b8.mp3',
+    audioUrl: 'https://cdn.pixabay.com/audio/2022/05/27/audio_14c81d3222.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'easy', 'lofi'); },
   },
-  'tokyo-drift': {
-    name: 'Tokyo Drift',
-    bpm: 128,
-    duration: 60,
-    difficulty: 'medium',
-    style: 'future-bass',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/06/10/audio_8045338a6f.mp3',
-    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'future-bass'); },
-  },
-  'disco-inferno': {
-    name: 'Disco Inferno',
+  'funky-groove': {
+    name: 'Funky Groove',
     bpm: 115,
     duration: 60,
     difficulty: 'easy',
     style: 'disco',
-    audioUrl: 'https://cdn.pixabay.com/audio/2022/10/25/audio_4f7ef04ca8.mp3',
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/09/24/audio_e4a5da2ff3.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'easy', 'disco'); },
   },
-  'dark-matter': {
-    name: 'Dark Matter',
-    bpm: 150,
-    duration: 60,
-    difficulty: 'hard',
-    style: 'darksynth',
-    audioUrl: 'https://cdn.pixabay.com/audio/2022/08/23/audio_d1718372cb.mp3',
-    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'darksynth'); },
-  },
-  'tropical-heat': {
-    name: 'Tropical Heat',
-    bpm: 110,
+  'edm-drop': {
+    name: 'EDM Drop',
+    bpm: 128,
     duration: 60,
     difficulty: 'medium',
-    style: 'reggaeton',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/04/14/audio_5d6668b1f0.mp3',
-    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'reggaeton'); },
+    style: 'edm',
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/06/06/audio_48e9cf2ffa.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'edm'); },
   },
-  'hiphop-cypher': {
-    name: 'Hip-Hop Cypher',
-    bpm: 95,
-    duration: 60,
-    difficulty: 'medium',
-    style: 'hiphop',
-    audioUrl: 'https://cdn.pixabay.com/audio/2024/07/24/audio_e449d10473.mp3',
-    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'hiphop'); },
-  },
-  'house-party': {
-    name: 'House Party',
+  'house-beat': {
+    name: 'House Beat',
     bpm: 124,
     duration: 60,
     difficulty: 'medium',
     style: 'house',
-    audioUrl: 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b5b7b2b2.mp3',
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/08/06/audio_69a61c5e14.mp3',
     generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'house'); },
+  },
+  'afrobeats-rhythm': {
+    name: 'Afrobeats Rhythm',
+    bpm: 110,
+    duration: 60,
+    difficulty: 'medium',
+    style: 'reggaeton',
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/01/18/audio_cb73ddb46e.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'reggaeton'); },
+  },
+  'upbeat-funk': {
+    name: 'Upbeat Funk',
+    bpm: 120,
+    duration: 60,
+    difficulty: 'medium',
+    style: 'future-bass',
+    audioUrl: 'https://cdn.pixabay.com/audio/2023/04/23/audio_87b3225287.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'medium', 'future-bass'); },
+  },
+  'energetic-beat': {
+    name: 'Energetic Beat',
+    bpm: 140,
+    duration: 60,
+    difficulty: 'hard',
+    style: 'edm',
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/07/30/audio_13d732e545.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'edm'); },
+  },
+  'dnb-breakbeat': {
+    name: 'DnB Breakbeat',
+    bpm: 160,
+    duration: 60,
+    difficulty: 'hard',
+    style: 'dnb',
+    audioUrl: 'https://cdn.pixabay.com/audio/2024/02/07/audio_d9eb886306.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'dnb'); },
+  },
+  'high-energy-trap': {
+    name: 'High Energy Trap',
+    bpm: 150,
+    duration: 60,
+    difficulty: 'hard',
+    style: 'hiphop',
+    audioUrl: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3',
+    generateBeats() { return generateStructuredBeatMap(this.bpm, this.duration, 'hard', 'hiphop'); },
   },
   'custom-audio': {
     name: 'Custom Audio',
@@ -2520,6 +2520,11 @@ async function startGame() {
       // Use actual audio duration if shorter than configured
       if (songAudioBuffer) {
         song.duration = Math.min(song.duration, Math.floor(songAudioBuffer.duration));
+        // Auto-detect BPM from the loaded audio for better beat sync
+        const detectedBpm = detectBPM(songAudioBuffer);
+        if (detectedBpm) {
+          song.bpm = detectedBpm;
+        }
       }
     } catch (e) {
       // Fall back to synthesized audio
