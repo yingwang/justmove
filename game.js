@@ -77,7 +77,7 @@ const NEON_COLORS = {
 const POSES = {
   'arms-up': {
     name: 'Arms Up',
-    icon: '\\u2191',
+    icon: '\u2191',
     check(landmarks) {
       if (!landmarks) return 0;
       const lShoulder = landmarks[11];
@@ -106,7 +106,7 @@ const POSES = {
   },
   'arms-out': {
     name: 'T-Pose',
-    icon: '\\u2194',
+    icon: '\u2194',
     check(landmarks) {
       if (!landmarks) return 0;
       const lShoulder = landmarks[11];
@@ -135,7 +135,7 @@ const POSES = {
   },
   'left-arm-up': {
     name: 'Left Up',
-    icon: '\\u2196',
+    icon: '\u2196',
     check(landmarks) {
       if (!landmarks) return 0;
       const lShoulder = landmarks[11];
@@ -162,7 +162,7 @@ const POSES = {
   },
   'right-arm-up': {
     name: 'Right Up',
-    icon: '\\u2197',
+    icon: '\u2197',
     check(landmarks) {
       if (!landmarks) return 0;
       const lShoulder = landmarks[11];
@@ -187,7 +187,7 @@ const POSES = {
   },
   'hands-on-hips': {
     name: 'Hands on Hips',
-    icon: '\\u25C7',
+    icon: '\u25C7',
     check(landmarks) {
       if (!landmarks) return 0;
       const lHip = landmarks[23];
@@ -215,7 +215,7 @@ const POSES = {
   },
   'squat': {
     name: 'Squat',
-    icon: '\\u2193',
+    icon: '\u2193',
     check(landmarks) {
       if (!landmarks) return 0;
       const lHip = landmarks[23];
@@ -244,7 +244,7 @@ const POSES = {
   },
   'lean-left': {
     name: 'Lean Left',
-    icon: '\\u2190',
+    icon: '\u2190',
     check(landmarks) {
       if (!landmarks) return 0;
       const lShoulder = landmarks[11];
@@ -272,7 +272,7 @@ const POSES = {
   },
   'lean-right': {
     name: 'Lean Right',
-    icon: '\\u2192',
+    icon: '\u2192',
     check(landmarks) {
       if (!landmarks) return 0;
       const lShoulder = landmarks[11];
@@ -299,7 +299,7 @@ const POSES = {
   },
   'dab-left': {
     name: 'Dab Left',
-    icon: '\\u2199',
+    icon: '\u2199',
     check(landmarks) {
       if (!landmarks) return 0;
       const lShoulder = landmarks[11];
@@ -328,7 +328,7 @@ const POSES = {
   },
   'dab-right': {
     name: 'Dab Right',
-    icon: '\\u2198',
+    icon: '\u2198',
     check(landmarks) {
       if (!landmarks) return 0;
       const lShoulder = landmarks[11];
