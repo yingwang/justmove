@@ -404,142 +404,233 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   } else if (colorType === 'target') {
     color = JUST_DANCE_COLORS.target;
   } else {
-    color = JUST_DANCE_COLORS[colorType] || JUST_DANCE_COLORS.idle;
+    color = JUST_DANCE_COLORS[colorType] || JUST_DANCE_COLORS.player;
   }
 
-  // Animate glow
-  const pulse = 0.7 + 0.3 * Math.sin(performance.now() * 0.004);
+  const r = color.r, g = color.g, b = color.b;
+  const darkR = Math.max(0, r - 80), darkG = Math.max(0, g - 80), darkB = Math.max(0, b - 80);
+  const LIMB_W = 40;
+  const LIMB_SHORTEN_FACTOR = 0.3;
 
-  function glowLine(x1, y1, x2, y2, width) {
-    // Outer glow
+  // Helper: draw a solid chibi limb with dark 2px stroke border
+  function solidLimb(x1, y1, x2, y2, width) {
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    // Dark border
     ctx.beginPath();
     ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${0.15 * pulse})`;
-    ctx.lineWidth = width * 2.5; ctx.lineCap = 'round'; ctx.stroke();
-    // Body
+    ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
+    ctx.lineWidth = width + 4;
+    ctx.stroke();
+    // Solid fill
     ctx.beginPath();
     ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.8)`;
-    ctx.lineWidth = width; ctx.stroke();
-    // Bright core
-    ctx.beginPath();
-    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(255, 255, 255, ${0.35 * pulse})`;
-    ctx.lineWidth = width * 0.35; ctx.stroke();
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+    ctx.lineWidth = width;
+    ctx.stroke();
+    ctx.restore();
   }
 
-  // Head (human-like shape with facial features)
-  const headX = cx * w;
-  const headCY = headY * h;
-  const headRx = 16, headRy = 20;
+  // Helper: draw a filled joint circle
+  function solidJoint(x, y, radius) {
+    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
+    ctx.beginPath();
+    ctx.arc(x, y, radius + 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-  // Outer glow
-  ctx.save();
-  ctx.translate(headX, headCY);
-  ctx.scale(1, headRy / headRx);
-  const headGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, headRx * 1.8);
-  headGrad.addColorStop(0, `rgba(255, 255, 255, ${0.15 * pulse})`);
-  headGrad.addColorStop(0.35, `rgba(${color.r}, ${color.g}, ${color.b}, 0.3)`);
-  headGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = headGrad;
-  ctx.beginPath(); ctx.arc(0, 0, headRx * 1.8, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
+  // --- Filled rounded torso ---
+  const lsx = lShoulderX * w, lsy = shoulderY * h;
+  const rsx = rShoulderX * w, rsy = shoulderY * h;
+  const lhx = (cx - legSpread + bodyTilt) * w, lhy = hipY * h;
+  const rhx = (cx + legSpread + bodyTilt) * w, rhy = hipY * h;
+  const pad = 10;
 
-  // Head outline (oval, not filled dot)
   ctx.save();
-  ctx.translate(headX, headCY);
-  ctx.scale(1, headRy / headRx);
-  ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.85)`;
-  ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.arc(0, 0, headRx, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.08)`;
+  ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
+  ctx.beginPath();
+  ctx.moveTo(lsx - pad - 3, lsy - 3);
+  ctx.quadraticCurveTo((lsx + rsx) / 2, lsy - pad - 5, rsx + pad + 3, rsy - 3);
+  ctx.quadraticCurveTo(rsx + pad + 5, (rsy + rhy) / 2, rhx + pad + 3, rhy + 3);
+  ctx.quadraticCurveTo((lhx + rhx) / 2, lhy + pad + 5, lhx - pad - 3, lhy + 3);
+  ctx.quadraticCurveTo(lsx - pad - 5, (lsy + lhy) / 2, lsx - pad - 3, lsy - 3);
+  ctx.closePath();
   ctx.fill();
+
+  ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.95)`;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(lsx - pad, lsy);
+  ctx.quadraticCurveTo((lsx + rsx) / 2, lsy - pad - 2, rsx + pad, rsy);
+  ctx.quadraticCurveTo(rsx + pad + 2, (rsy + rhy) / 2, rhx + pad, rhy);
+  ctx.quadraticCurveTo((lhx + rhx) / 2, lhy + pad + 2, lhx - pad, lhy);
+  ctx.quadraticCurveTo(lsx - pad - 2, (lsy + lhy) / 2, lsx - pad, lsy);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
 
-  // Hair (short strokes on top of head)
-  ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.7)`;
-  ctx.lineWidth = 2; ctx.lineCap = 'round';
-  for (let i = -3; i <= 3; i++) {
-    const hx = headX + i * 4;
+  // --- Neck ---
+  const headX = cx * w;
+  const neckTopY = headY * h + 50;
+  const neckBotY = shoulderY * h;
+  solidLimb(headX, neckTopY, headX, neckBotY, 18);
+
+  // --- Arms (chibi shortened forearms) ---
+  if (opts.lArm) {
+    const elbowX = opts.lArm[0].x * w, elbowY = opts.lArm[0].y * h;
+    let wristX = opts.lArm[1].x * w, wristY = opts.lArm[1].y * h;
+    // Shorten forearm by 30%
+    wristX = elbowX + (wristX - elbowX) * (1 - LIMB_SHORTEN_FACTOR);
+    wristY = elbowY + (wristY - elbowY) * (1 - LIMB_SHORTEN_FACTOR);
+    solidLimb(lShoulderX * w, shoulderY * h, elbowX, elbowY, LIMB_W);
+    solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - 6);
+    // Elbow joint
+    solidJoint(elbowX, elbowY, 18);
+    // Mitten hand
+    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
+    ctx.beginPath(); ctx.arc(wristX, wristY, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+    ctx.beginPath(); ctx.arc(wristX, wristY, 17, 0, Math.PI * 2); ctx.fill();
+  }
+  if (opts.rArm) {
+    const elbowX = opts.rArm[0].x * w, elbowY = opts.rArm[0].y * h;
+    let wristX = opts.rArm[1].x * w, wristY = opts.rArm[1].y * h;
+    wristX = elbowX + (wristX - elbowX) * (1 - LIMB_SHORTEN_FACTOR);
+    wristY = elbowY + (wristY - elbowY) * (1 - LIMB_SHORTEN_FACTOR);
+    solidLimb(rShoulderX * w, shoulderY * h, elbowX, elbowY, LIMB_W);
+    solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - 6);
+    solidJoint(elbowX, elbowY, 18);
+    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
+    ctx.beginPath(); ctx.arc(wristX, wristY, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+    ctx.beginPath(); ctx.arc(wristX, wristY, 17, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Shoulder joints
+  solidJoint(lShoulderX * w, shoulderY * h, 20);
+  solidJoint(rShoulderX * w, shoulderY * h, 20);
+
+  // --- Legs (chibi shortened lower legs) ---
+  const hipCx = (cx + bodyTilt) * w;
+  const lKneeX = (cx - legSpread + bodyTilt) * w, lKneeY = kneeY * h;
+  const rKneeX = (cx + legSpread + bodyTilt) * w, rKneeY = kneeY * h;
+  let lFootX = lKneeX, lFootY = footY * h;
+  let rFootX = rKneeX, rFootY = footY * h;
+  // Shorten lower legs by 30%
+  lFootX = lKneeX + (lFootX - lKneeX) * (1 - LIMB_SHORTEN_FACTOR);
+  lFootY = lKneeY + (lFootY - lKneeY) * (1 - LIMB_SHORTEN_FACTOR);
+  rFootX = rKneeX + (rFootX - rKneeX) * (1 - LIMB_SHORTEN_FACTOR);
+  rFootY = rKneeY + (rFootY - rKneeY) * (1 - LIMB_SHORTEN_FACTOR);
+
+  // Upper legs
+  solidLimb(hipCx, hipY * h, lKneeX, lKneeY, LIMB_W + 4);
+  solidLimb(hipCx, hipY * h, rKneeX, rKneeY, LIMB_W + 4);
+  // Lower legs
+  solidLimb(lKneeX, lKneeY, lFootX, lFootY, LIMB_W);
+  solidLimb(rKneeX, rKneeY, rFootX, rFootY, LIMB_W);
+
+  // Hip joints
+  solidJoint(hipCx, hipY * h, 22);
+  // Knee joints
+  solidJoint(lKneeX, lKneeY, 18);
+  solidJoint(rKneeX, rKneeY, 18);
+
+  // Shoe feet (rounded ellipses)
+  for (const [fx, fy] of [[lFootX, lFootY], [rFootX, rFootY]]) {
+    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
+    ctx.beginPath(); ctx.ellipse(fx, fy, 26, 16, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+    ctx.beginPath(); ctx.ellipse(fx, fy, 22, 13, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // --- Cute Head (42x50 radius) ---
+  const headCY = headY * h;
+  const headRx = 42, headRy = 50;
+
+  // Head border
+  ctx.save();
+  ctx.translate(headX, headCY);
+  ctx.scale(1, headRy / headRx);
+  ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
+  ctx.beginPath(); ctx.arc(0, 0, headRx + 3, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Head shape (solid filled oval)
+  ctx.save();
+  ctx.translate(headX, headCY);
+  ctx.scale(1, headRy / headRx);
+  ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.95)`;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, 0, headRx, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+
+  // Hair (cute spiky strokes)
+  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.85)`;
+  ctx.lineWidth = 3; ctx.lineCap = 'round';
+  for (let i = -5; i <= 5; i++) {
+    const hx = headX + i * 7;
     const hy = headCY - headRy - 1;
     ctx.beginPath();
-    ctx.moveTo(hx, hy + 4);
-    ctx.quadraticCurveTo(hx + i * 0.8, hy - 4, hx + i * 1.5, hy - 1);
+    ctx.moveTo(hx, hy + 8);
+    ctx.quadraticCurveTo(hx + i * 1.5, hy - 10, hx + i * 3, hy - 1);
     ctx.stroke();
   }
 
-  // Ears
+  // Ears (round, solid)
   const earY = headCY - 1;
-  ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.7)`;
-  ctx.lineWidth = 1.8; ctx.lineCap = 'round';
-  // Left ear
-  ctx.beginPath();
-  ctx.arc(headX - headRx - 3, earY, 4, 0.3 * Math.PI, 1.7 * Math.PI);
-  ctx.stroke();
-  // Right ear
-  ctx.beginPath();
-  ctx.arc(headX + headRx + 3, earY, 4, 1.3 * Math.PI, 0.7 * Math.PI);
-  ctx.stroke();
-
-  // Eyes (almond-shaped)
-  const eyeOffX = 6, eyeOffY = -2, eyeW = 3.5, eyeH = 2;
-  ctx.fillStyle = `rgba(255, 255, 255, ${0.85 * pulse})`;
-  // Left eye
-  ctx.beginPath();
-  ctx.ellipse(headX - eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // Right eye
-  ctx.beginPath();
-  ctx.ellipse(headX + eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // Pupils
-  ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.9)`;
-  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, 1.2, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, 1.2, 0, Math.PI * 2); ctx.fill();
-
-  // Nose (small V-shape, not a dot)
-  ctx.beginPath();
-  ctx.moveTo(headX, headCY + 1);
-  ctx.lineTo(headX - 2, headCY + 5);
-  ctx.lineTo(headX + 2, headCY + 5);
-  ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 * pulse})`;
-  ctx.lineWidth = 1.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  ctx.stroke();
-
-  // Mouth (small smile arc)
-  ctx.beginPath();
-  ctx.arc(headX, headCY + 9, 5, 0.15 * Math.PI, 0.85 * Math.PI);
-  ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
-  ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.stroke();
-
-  // Neck (connects bottom of head oval to top of spine)
-  const neckTop = headCY + headRy;
-  const neckOffset = 0.06;
-  const neckBottom = (headY + neckOffset) * h;
-  glowLine(headX - 4, neckTop, headX - 4, neckBottom, 4);
-  glowLine(headX + 4, neckTop, headX + 4, neckBottom, 4);
-
-  // Spine
-  glowLine(cx * w, neckBottom, (cx + bodyTilt) * w, hipY * h, 8);
-
-  // Shoulders
-  glowLine(lShoulderX * w, shoulderY * h, rShoulderX * w, shoulderY * h, 8);
-
-  // Arms
-  if (opts.lArm) {
-    glowLine(lShoulderX * w, shoulderY * h, opts.lArm[0].x * w, opts.lArm[0].y * h, 7);
-    glowLine(opts.lArm[0].x * w, opts.lArm[0].y * h, opts.lArm[1].x * w, opts.lArm[1].y * h, 6);
-  }
-  if (opts.rArm) {
-    glowLine(rShoulderX * w, shoulderY * h, opts.rArm[0].x * w, opts.rArm[0].y * h, 7);
-    glowLine(opts.rArm[0].x * w, opts.rArm[0].y * h, opts.rArm[1].x * w, opts.rArm[1].y * h, 6);
+  for (const side of [-1, 1]) {
+    const earCx = headX + side * (headRx + 6);
+    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.8)`;
+    ctx.beginPath(); ctx.arc(earCx, earY, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
+    ctx.beginPath(); ctx.arc(earCx, earY, 8, 0, Math.PI * 2); ctx.fill();
   }
 
-  // Legs
-  glowLine((cx + bodyTilt) * w, hipY * h, (cx - legSpread + bodyTilt) * w, kneeY * h, 8);
-  glowLine((cx - legSpread + bodyTilt) * w, kneeY * h, (cx - legSpread + bodyTilt) * w, footY * h, 7);
-  glowLine((cx + bodyTilt) * w, hipY * h, (cx + legSpread + bodyTilt) * w, kneeY * h, 8);
-  glowLine((cx + legSpread + bodyTilt) * w, kneeY * h, (cx + legSpread + bodyTilt) * w, footY * h, 7);
+  // Big cute eyes (solid white with large pupils)
+  const eyeOffX = 14, eyeOffY = -4, eyeW = 10, eyeH = 8;
+  // Eye whites
+  ctx.fillStyle = 'rgb(255, 255, 255)';
+  ctx.beginPath(); ctx.ellipse(headX - eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(headX + eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+  // Eye outlines
+  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.7)`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(headX - eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(headX + eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
+  // Large pupils
+  ctx.fillStyle = `rgb(${darkR}, ${darkG}, ${darkB})`;
+  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, 4.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, 4.5, 0, Math.PI * 2); ctx.fill();
+  // Eye sparkle
+  ctx.fillStyle = 'rgb(255, 255, 255)';
+  ctx.beginPath(); ctx.arc(headX - eyeOffX + 2.5, headCY + eyeOffY - 2.5, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX + eyeOffX + 2.5, headCY + eyeOffY - 2.5, 2, 0, Math.PI * 2); ctx.fill();
+
+  // Nose (white highlight to stand out against any character color)
+  ctx.fillStyle = `rgba(255, 255, 255, 0.55)`;
+  ctx.beginPath(); ctx.arc(headX, headCY + 7, 3, 0, Math.PI * 2); ctx.fill();
+
+  // Mouth (cute smile arc)
+  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.8)`;
+  ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(headX, headCY + 16, 10, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
+
+  // Blush (cute rosy cheeks)
+  ctx.fillStyle = 'rgba(255, 150, 180, 0.35)';
+  ctx.beginPath(); ctx.ellipse(headX - 25, headCY + 8, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(headX + 25, headCY + 8, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
 }
 
 // ===== Song / Beat Map Definitions =====
