@@ -1948,13 +1948,13 @@ const LIMB_SEGMENTS = [
   [24, 26], [26, 28],
 ];
 
-const DEFAULT_LIMB_WIDTH = 12;
+const DEFAULT_LIMB_WIDTH = 22;
 
 const LIMB_WIDTHS = {
-  '11-13': 14, '13-15': 12, // left arm (thick & stubby)
-  '12-14': 14, '14-16': 12, // right arm
-  '23-25': 16, '25-27': 14, // left leg
-  '24-26': 16, '26-28': 14, // right leg
+  '11-13': 28, '13-15': 24, // left arm (thick & cute)
+  '12-14': 28, '14-16': 24, // right arm
+  '23-25': 32, '25-27': 28, // left leg
+  '24-26': 32, '26-28': 28, // right leg
 };
 
 function getNeonColor() {
@@ -1975,15 +1975,15 @@ function drawNeonLimb(ctx, x1, y1, x2, y2, width, color, glowIntensity) {
   ctx.beginPath();
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
-  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.15 * glowIntensity})`;
-  ctx.lineWidth = width * 1.8;
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.2 * glowIntensity})`;
+  ctx.lineWidth = width * 1.6;
   ctx.stroke();
 
-  // Main thick rounded limb
+  // Solid filled limb (cute chunky body part)
   ctx.beginPath();
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
-  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.7)`;
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
   ctx.lineWidth = width;
   ctx.stroke();
 
@@ -1991,8 +1991,8 @@ function drawNeonLimb(ctx, x1, y1, x2, y2, width, color, glowIntensity) {
   ctx.beginPath();
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
-  ctx.strokeStyle = `rgba(255, 255, 255, ${0.25 * glowIntensity})`;
-  ctx.lineWidth = width * 0.4;
+  ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * glowIntensity})`;
+  ctx.lineWidth = width * 0.35;
   ctx.stroke();
 
   ctx.restore();
@@ -2042,10 +2042,10 @@ function drawNeonBody(ctx, landmarks, w, h) {
     ctx.closePath();
     ctx.fill();
 
-    // Main body shape (filled rounded)
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
-    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
-    ctx.lineWidth = 3;
+    // Main body shape (filled rounded - cute outfit)
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.55)`;
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+    ctx.lineWidth = 3.5;
     ctx.lineJoin = 'round';
     ctx.beginPath();
     ctx.moveTo(lsx - pad, lsy);
@@ -2083,19 +2083,19 @@ function drawNeonBody(ctx, landmarks, w, h) {
     if (!lm || lm.visibility < 0.5) continue;
     const hx = lm.x * w, hy = lm.y * h;
     // Outer glow
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.12 * glowIntensity})`;
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.15 * glowIntensity})`;
     ctx.beginPath();
-    ctx.arc(hx, hy, 18, 0, Math.PI * 2);
+    ctx.arc(hx, hy, 24, 0, Math.PI * 2);
     ctx.fill();
     // Main round mitten
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.7)`;
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
     ctx.beginPath();
-    ctx.arc(hx, hy, 13, 0, Math.PI * 2);
+    ctx.arc(hx, hy, 18, 0, Math.PI * 2);
     ctx.fill();
     // White highlight (shiny)
     ctx.fillStyle = `rgba(255, 255, 255, ${0.3 * glowIntensity})`;
     ctx.beginPath();
-    ctx.arc(hx - 3, hy - 3, 5, 0, Math.PI * 2);
+    ctx.arc(hx - 4, hy - 4, 7, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -2105,19 +2105,19 @@ function drawNeonBody(ctx, landmarks, w, h) {
     if (!lm || lm.visibility < 0.5) continue;
     const fx = lm.x * w, fy = lm.y * h;
     // Outer glow
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.1 * glowIntensity})`;
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.12 * glowIntensity})`;
     ctx.beginPath();
-    ctx.ellipse(fx, fy, 22, 14, 0, 0, Math.PI * 2);
+    ctx.ellipse(fx, fy, 30, 20, 0, 0, Math.PI * 2);
     ctx.fill();
     // Main shoe shape
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.7)`;
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
     ctx.beginPath();
-    ctx.ellipse(fx, fy, 16, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(fx, fy, 22, 14, 0, 0, Math.PI * 2);
     ctx.fill();
     // White highlight
     ctx.fillStyle = `rgba(255, 255, 255, ${0.25 * glowIntensity})`;
     ctx.beginPath();
-    ctx.ellipse(fx - 2, fy - 3, 7, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(fx - 3, fy - 4, 9, 5, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -2126,16 +2126,16 @@ function drawNeonBody(ctx, landmarks, w, h) {
   if (lShoulder && rShoulder && nose &&
       lShoulder.visibility > 0.5 && rShoulder.visibility > 0.5 && nose.visibility > 0.5) {
     const neckTopX = nose.x * w;
-    const neckTopY = nose.y * h + 22;
+    const neckTopY = nose.y * h + 30;
     const neckBotX = (lShoulder.x + rShoulder.x) / 2 * w;
     const neckBotY = (lShoulder.y + rShoulder.y) / 2 * h;
-    drawNeonLimb(ctx, neckTopX, neckTopY, neckBotX, neckBotY, 10, color, glowIntensity);
+    drawNeonLimb(ctx, neckTopX, neckTopY, neckBotX, neckBotY, 16, color, glowIntensity);
   }
 
   // --- Cute head with facial features ---
   if (nose && nose.visibility > 0.5) {
     const hx = nose.x * w, hy = nose.y * h;
-    const headRx = 26, headRy = 32;
+    const headRx = 36, headRy = 44;
 
     // Subtle glow behind head
     ctx.save();
@@ -2149,43 +2149,43 @@ function drawNeonBody(ctx, landmarks, w, h) {
     ctx.beginPath(); ctx.arc(0, 0, headRx * 1.6, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
 
-    // Head shape (filled oval with outline)
+    // Head shape (filled oval with outline - cute chibi)
     ctx.save();
     ctx.translate(hx, hy);
     ctx.scale(1, headRy / headRx);
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.15)`;
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.3)`;
     ctx.beginPath(); ctx.arc(0, 0, headRx, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+    ctx.lineWidth = 3.5;
     ctx.stroke();
     ctx.restore();
 
     // Hair (cute spiky strokes on top)
     ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.7)`;
-    ctx.lineWidth = 2.5; ctx.lineCap = 'round';
-    for (let i = -3; i <= 3; i++) {
-      const hairX = hx + i * 6;
+    ctx.lineWidth = 3; ctx.lineCap = 'round';
+    for (let i = -4; i <= 4; i++) {
+      const hairX = hx + i * 7;
       const hairY = hy - headRy - 1;
       ctx.beginPath();
-      ctx.moveTo(hairX, hairY + 5);
-      ctx.quadraticCurveTo(hairX + i * 1, hairY - 6, hairX + i * 2, hairY - 1);
+      ctx.moveTo(hairX, hairY + 6);
+      ctx.quadraticCurveTo(hairX + i * 1.2, hairY - 8, hairX + i * 2.5, hairY - 1);
       ctx.stroke();
     }
 
     // Ears (round)
     const earY = hy - 1;
     ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.7)`;
-    ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.arc(hx - headRx - 4, earY, 6, 0.3 * Math.PI, 1.7 * Math.PI);
+    ctx.arc(hx - headRx - 5, earY, 8, 0.3 * Math.PI, 1.7 * Math.PI);
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(hx + headRx + 4, earY, 6, 1.3 * Math.PI, 0.7 * Math.PI);
+    ctx.arc(hx + headRx + 5, earY, 8, 1.3 * Math.PI, 0.7 * Math.PI);
     ctx.stroke();
 
     // Big cute eyes (larger for chibi look)
     const lEye = landmarks[2], rEye = landmarks[5];
-    const eyeW = 6, eyeH = 4;
+    const eyeW = 8, eyeH = 6;
     if (lEye && rEye && lEye.visibility > 0.4 && rEye.visibility > 0.4) {
       const lex = lEye.x * w, ley = lEye.y * h;
       const rex = rEye.x * w, rey = rEye.y * h;
@@ -2195,52 +2195,52 @@ function drawNeonBody(ctx, landmarks, w, h) {
       ctx.beginPath(); ctx.ellipse(rex, rey, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
       // Big pupils
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-      ctx.beginPath(); ctx.arc(lex, ley, 2.5, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(rex, rey, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(lex, ley, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(rex, rey, 3.5, 0, Math.PI * 2); ctx.fill();
       // Eye sparkle
       ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * glowIntensity})`;
-      ctx.beginPath(); ctx.arc(lex + 1.5, ley - 1.5, 1, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(rex + 1.5, rey - 1.5, 1, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(lex + 2, ley - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(rex + 2, rey - 2, 1.5, 0, Math.PI * 2); ctx.fill();
     } else {
       // Fallback eyes at estimated positions
       ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * glowIntensity})`;
-      ctx.beginPath(); ctx.ellipse(hx - 9, hy - 5, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(hx + 9, hy - 5, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(hx - 12, hy - 6, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(hx + 12, hy - 6, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-      ctx.beginPath(); ctx.arc(hx - 9, hy - 5, 2.5, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(hx + 9, hy - 5, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx - 12, hy - 6, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx + 12, hy - 6, 3.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * glowIntensity})`;
-      ctx.beginPath(); ctx.arc(hx - 7.5, hy - 6.5, 1, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(hx + 10.5, hy - 6.5, 1, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx - 10, hy - 8, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx + 14, hy - 8, 1.5, 0, Math.PI * 2); ctx.fill();
     }
 
     // Nose (tiny dot, cuter)
     ctx.fillStyle = `rgba(255, 255, 255, ${0.45 * glowIntensity})`;
     ctx.beginPath();
-    ctx.arc(hx, hy + 4, 2, 0, Math.PI * 2);
+    ctx.arc(hx, hy + 6, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
     // Mouth (cute smile arc)
     const mouthL = landmarks[9], mouthR = landmarks[10];
     ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * glowIntensity})`;
-    ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round';
     if (mouthL && mouthR && mouthL.visibility > 0.4 && mouthR.visibility > 0.4) {
       const mx = (mouthL.x + mouthR.x) / 2 * w;
       const my = (mouthL.y + mouthR.y) / 2 * h;
       const mw = Math.abs(mouthR.x - mouthL.x) * w / 2;
       ctx.beginPath();
-      ctx.arc(mx, my, Math.max(mw, 6), 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.arc(mx, my, Math.max(mw, 8), 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     } else {
       ctx.beginPath();
-      ctx.arc(hx, hy + 12, 7, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.arc(hx, hy + 15, 9, 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     }
 
     // Blush (cute rosy cheeks, larger)
-    ctx.fillStyle = `rgba(255, 150, 180, ${0.2 * glowIntensity})`;
-    ctx.beginPath(); ctx.ellipse(hx - 16, hy + 5, 7, 4, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(hx + 16, hy + 5, 7, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(255, 150, 180, ${0.25 * glowIntensity})`;
+    ctx.beginPath(); ctx.ellipse(hx - 22, hy + 7, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(hx + 22, hy + 7, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
   }
 }
 
@@ -2250,14 +2250,14 @@ function drawNeonHand(ctx, landmarks, w, h) {
   if (landmarks[0]) {
     const x = landmarks[0].x * w;
     const y = landmarks[0].y * h;
-    ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.7)`;
+    ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.8)`;
     ctx.beginPath();
-    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.arc(x, y, 15, 0, Math.PI * 2);
     ctx.fill();
     // White highlight
-    ctx.fillStyle = `rgba(255, 255, 255, 0.25)`;
+    ctx.fillStyle = `rgba(255, 255, 255, 0.3)`;
     ctx.beginPath();
-    ctx.arc(x - 2, y - 2, 4, 0, Math.PI * 2);
+    ctx.arc(x - 3, y - 3, 6, 0, Math.PI * 2);
     ctx.fill();
   }
 }
