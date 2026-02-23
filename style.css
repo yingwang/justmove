@@ -90,6 +90,14 @@ body {
   text-transform: uppercase;
 }
 
+.version-code {
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 0.3rem;
+  letter-spacing: 0.1em;
+}
+
 .start-content {
   margin-top: 2rem;
   display: flex;
