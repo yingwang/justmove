@@ -39,6 +39,7 @@ let audioContext = null;
 let gameStartTime = 0;
 let lastFrameTime = 0;
 let animFrameId = null;
+let countdownIntervalId = null;
 
 // Score state
 let score = 0;
@@ -910,8 +911,11 @@ async function loadSongFromUrl(url) {
   if (!response.ok) throw new Error('Failed to fetch audio');
   const arrayBuffer = await response.arrayBuffer();
   const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
-  songAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
-  tempCtx.close();
+  try {
+    songAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+  } finally {
+    tempCtx.close();
+  }
   return songAudioBuffer;
 }
 
@@ -940,8 +944,11 @@ async function loadCustomAudio(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
-    customAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
-    tempCtx.close();
+    try {
+      customAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+    } finally {
+      tempCtx.close();
+    }
 
     statusEl.textContent = 'Detecting BPM...';
     customAudioBpm = detectBPM(customAudioBuffer);
@@ -1294,8 +1301,10 @@ async function initMediaPipe() {
 }
 
 function onPoseResults(results) {
-  poseCanvas.width = webcam.videoWidth || 1280;
-  poseCanvas.height = webcam.videoHeight || 720;
+  const vw = webcam.videoWidth || 1280;
+  const vh = webcam.videoHeight || 720;
+  if (poseCanvas.width !== vw) poseCanvas.width = vw;
+  if (poseCanvas.height !== vh) poseCanvas.height = vh;
   const w = poseCanvas.width;
   const h = poseCanvas.height;
 
@@ -1866,7 +1875,7 @@ function runCountdown(callback) {
   playCountdownBeep(false);
   triggerCountdownPop(false);
 
-  const interval = setInterval(() => {
+  countdownIntervalId = setInterval(() => {
     count--;
     if (count > 0) {
       countdownNumber.dataset.count = count;
@@ -1879,7 +1888,8 @@ function runCountdown(callback) {
       playCountdownBeep(true);
       triggerCountdownPop(true);
     } else {
-      clearInterval(interval);
+      clearInterval(countdownIntervalId);
+      countdownIntervalId = null;
       countdownEl.classList.add('hidden');
       callback();
     }
@@ -2077,8 +2087,10 @@ function renderBeatTimeline(elapsed) {
 }
 
 function renderGameEffects(elapsed) {
-  const cw = gameCanvas.width = window.innerWidth;
-  const ch = gameCanvas.height = window.innerHeight;
+  const cw = window.innerWidth;
+  const ch = window.innerHeight;
+  if (gameCanvas.width !== cw) gameCanvas.width = cw;
+  if (gameCanvas.height !== ch) gameCanvas.height = ch;
   gameCtx.clearRect(0, 0, cw, ch);
 
   // --- Beat pulse (background throbs with music) ---
@@ -2294,6 +2306,9 @@ startBtn.addEventListener('click', () => {
     initMediaPipe().then(() => {
       // Wait a bit for pose detection to warm up
       setTimeout(startGame, 1000);
+    }).catch((err) => {
+      console.error('Failed to initialize MediaPipe:', err);
+      loadingText.textContent = 'Failed to start camera. Please reload and allow access.';
     });
   } else {
     startGame();
@@ -2303,8 +2318,35 @@ startBtn.addEventListener('click', () => {
 retryBtn.addEventListener('click', startGame);
 
 menuBtn.addEventListener('click', () => {
-  switchScreen('start-screen');
   gameState = 'menu';
+
+  // Cancel any pending animation frame
+  if (animFrameId) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
+
+  // Clear countdown timer if mid-countdown
+  if (countdownIntervalId) {
+    clearInterval(countdownIntervalId);
+    countdownIntervalId = null;
+    countdownEl.classList.add('hidden');
+  }
+
+  // Stop audio
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+  songAudioBuffer = null;
+
+  // Clean up match meter
+  const meter = document.querySelector('.match-meter');
+  if (meter) meter.remove();
+  const meterLabel = document.querySelector('.match-meter-label');
+  if (meterLabel) meterLabel.remove();
+
+  switchScreen('start-screen');
 });
 
 // Handle resize
