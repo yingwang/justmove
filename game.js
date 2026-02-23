@@ -417,271 +417,281 @@ function dist2d(a, b) {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
+// ===== Just Dance style avatar rendering =====
 function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.clearRect(0, 0, w, h);
 
-  const headY = opts.squat ? 0.3 : 0.18;
-  const shoulderY = opts.squat ? 0.38 : 0.32;
-  const hipY = opts.squat ? 0.58 : 0.58;
+  // Fixed proportion calculations based on canvas size
+  const s = Math.min(w / 600, h / 720);
   let bodyTilt = 0;
   if (opts.leanLeft) bodyTilt = -0.04;
   if (opts.leanRight) bodyTilt = 0.04;
 
   const cx = 0.5 + bodyTilt;
-  const lShoulderX = cx - 0.12 + bodyTilt;
-  const rShoulderX = cx + 0.12 + bodyTilt;
-  const kneeY = opts.squat ? 0.7 : 0.75;
-  const footY = opts.squat ? 0.85 : 0.92;
-  const legSpread = opts.squat ? 0.12 : 0.08;
+  const headY = opts.squat ? 0.25 : 0.18;
+  const shoulderY = opts.squat ? 0.38 : 0.32;
+  const hipY = opts.squat ? 0.60 : 0.58;
+  const kneeY = opts.squat ? 0.75 : 0.76;
+  const footY = opts.squat ? 0.90 : 0.94;
 
-  // Get color based on type
-  let color;
-  if (colorType === 'player') {
-    color = JUST_DANCE_COLORS.player;
-  } else if (colorType === 'target') {
-    color = JUST_DANCE_COLORS.target;
-  } else {
-    color = JUST_DANCE_COLORS[colorType] || JUST_DANCE_COLORS.player;
-  }
+  const lShoulderX = cx - 0.12;
+  const rShoulderX = cx + 0.12;
+  const legSpread = opts.squat ? 0.14 : 0.08;
 
-  const r = color.r, g = color.g, b = color.b;
-  const darkR = Math.max(0, r - 80), darkG = Math.max(0, g - 80), darkB = Math.max(0, b - 80);
-  // Scale all pixel sizes relative to canvas size (reference design: 600×720)
-  const s = Math.min(w / 600, h / 720);
-  const LIMB_W = Math.max(4, Math.round(40 * s));
-  const LIMB_SHORTEN_FACTOR = 0.3;
-  const headRx = Math.round(55 * s);
-  const headRy = Math.round(65 * s);
+  // Avatar colors (matching reference: sunglasses, beard, blue hat, black vest, red shirt, watch, yellow glove, black pants, blue boots)
+  const colors = {
+    skin: '#FFFFFF',
+    vest: '#0A1118',
+    shirt: '#CC1111',
+    pants: '#1A1A24',
+    boots: '#2233AA',
+    glove: '#FFDD00',
+    watch: '#111111',
+    hair: '#111111',
+    hat: '#1E2A5E',
+    outline: '#000000'
+  };
 
-  // Helper: draw a solid chibi limb with neon glow border (Just Dance style)
-  function solidLimb(x1, y1, x2, y2, width) {
-    ctx.save();
+  // Draw a limb with thick outline
+  function drawLimb(x1, y1, x2, y2, width, color) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    // Wide outer glow
+    // Black outer outline
     ctx.beginPath();
     ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.22)`;
-    ctx.lineWidth = width + 22;
+    ctx.strokeStyle = colors.outline;
+    ctx.lineWidth = width + Math.round(8 * s);
     ctx.stroke();
-    // Mid glow
+    // Inner fill color
     ctx.beginPath();
     ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.18)`;
-    ctx.lineWidth = width + 12;
-    ctx.stroke();
-    // Dark border
-    ctx.beginPath();
-    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.95)`;
-    ctx.lineWidth = width + 6;
-    ctx.stroke();
-    // Solid fill
-    ctx.beginPath();
-    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+    ctx.strokeStyle = color;
     ctx.lineWidth = width;
     ctx.stroke();
-    // Bright center highlight
-    ctx.beginPath();
-    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(255, 255, 255, 0.42)`;
-    ctx.lineWidth = width * 0.28;
-    ctx.stroke();
-    ctx.restore();
   }
 
-  // Ground spotlight (Just Dance stage effect)
-  const footCX = cx * w;
-  const footCY = footY * h + Math.round(8 * s);
-  const spotRx = Math.round(110 * s);
-  const spotRy = Math.round(28 * s);
+  // --- 1. Stage spotlight (bottom glow) ---
+  const footCX = cx * w, footCY = footY * h + Math.round(15 * s);
+  const spotRx = Math.round(130 * s), spotRy = Math.round(30 * s);
   const spotGrad = ctx.createRadialGradient(footCX, footCY, 0, footCX, footCY, spotRx);
-  spotGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.30)`);
-  spotGrad.addColorStop(0.55, `rgba(${r}, ${g}, ${b}, 0.10)`);
+  spotGrad.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
   spotGrad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.save();
   ctx.scale(1, spotRy / spotRx);
   ctx.beginPath();
   ctx.arc(footCX, footCY * (spotRx / spotRy), spotRx, 0, Math.PI * 2);
-  ctx.fillStyle = spotGrad;
-  ctx.fill();
+  ctx.fillStyle = spotGrad; ctx.fill();
   ctx.restore();
 
-  // --- Filled rounded torso ---
-  const lsx = lShoulderX * w, lsy = shoulderY * h;
-  const rsx = rShoulderX * w, rsy = shoulderY * h;
-  const lhx = (cx - legSpread + bodyTilt) * w, lhy = hipY * h;
-  const rhx = (cx + legSpread + bodyTilt) * w, rhy = hipY * h;
-  const pad = Math.round(10 * s);
+  // --- 2. Legs and boots ---
+  const limbW = Math.round(32 * s);
+  const lKneeX = (cx - legSpread) * w, rKneeX = (cx + legSpread) * w;
+  const lFootX = lKneeX - Math.round(10 * s), rFootX = rKneeX + Math.round(10 * s);
 
-  ctx.save();
-  ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
+  // Thighs and shins (black pants)
+  drawLimb(cx * w, hipY * h, lKneeX, kneeY * h, limbW + 6 * s, colors.pants);
+  drawLimb(cx * w, hipY * h, rKneeX, kneeY * h, limbW + 6 * s, colors.pants);
+  drawLimb(lKneeX, kneeY * h, lFootX, footY * h, limbW, colors.pants);
+  drawLimb(rKneeX, kneeY * h, rFootX, footY * h, limbW, colors.pants);
+
+  // Blue boots
+  drawLimb(lFootX, footY * h - 20 * s, lFootX, footY * h, limbW + 4 * s, colors.boots);
+  drawLimb(rFootX, footY * h - 20 * s, rFootX, footY * h, limbW + 4 * s, colors.boots);
+  // Soles
+  ctx.fillStyle = colors.outline;
+  ctx.fillRect(lFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s);
+  ctx.fillRect(rFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s);
+
+  // --- 3. Torso (red shirt + black vest) ---
+  const pad = Math.round(25 * s);
+  ctx.fillStyle = colors.shirt;
+  ctx.strokeStyle = colors.outline;
+  ctx.lineWidth = Math.round(6 * s);
+
+  // Red shirt base
   ctx.beginPath();
-  ctx.moveTo(lsx - pad - 3, lsy - 3);
-  ctx.quadraticCurveTo((lsx + rsx) / 2, lsy - pad - 5, rsx + pad + 3, rsy - 3);
-  ctx.quadraticCurveTo(rsx + pad + 5, (rsy + rhy) / 2, rhx + pad + 3, rhy + 3);
-  ctx.quadraticCurveTo((lhx + rhx) / 2, lhy + pad + 5, lhx - pad - 3, lhy + 3);
-  ctx.quadraticCurveTo(lsx - pad - 5, (lsy + lhy) / 2, lsx - pad - 3, lsy - 3);
+  ctx.moveTo(lShoulderX * w - pad, shoulderY * h);
+  ctx.lineTo(rShoulderX * w + pad, shoulderY * h);
+  ctx.lineTo(rShoulderX * w + pad - 10*s, hipY * h);
+  ctx.lineTo(lShoulderX * w - pad + 10*s, hipY * h);
   ctx.closePath();
-  ctx.fill();
+  ctx.fill(); ctx.stroke();
 
-  ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.95)`;
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
+  // Black vest (two open flaps)
+  ctx.fillStyle = colors.vest;
+  // Left vest flap
   ctx.beginPath();
-  ctx.moveTo(lsx - pad, lsy);
-  ctx.quadraticCurveTo((lsx + rsx) / 2, lsy - pad - 2, rsx + pad, rsy);
-  ctx.quadraticCurveTo(rsx + pad + 2, (rsy + rhy) / 2, rhx + pad, rhy);
-  ctx.quadraticCurveTo((lhx + rhx) / 2, lhy + pad + 2, lhx - pad, lhy);
-  ctx.quadraticCurveTo(lsx - pad - 2, (lsy + lhy) / 2, lsx - pad, lsy);
+  ctx.moveTo(lShoulderX * w - pad, shoulderY * h);
+  ctx.lineTo(cx * w - 10*s, shoulderY * h + 20*s);
+  ctx.lineTo(cx * w - 20*s, hipY * h);
+  ctx.lineTo(lShoulderX * w - pad + 10*s, hipY * h);
   ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
+  ctx.fill(); ctx.stroke();
+  // Right vest flap
+  ctx.beginPath();
+  ctx.moveTo(rShoulderX * w + pad, shoulderY * h);
+  ctx.lineTo(cx * w + 10*s, shoulderY * h + 20*s);
+  ctx.lineTo(cx * w + 20*s, hipY * h);
+  ctx.lineTo(rShoulderX * w + pad - 10*s, hipY * h);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
 
-  // --- Neck ---
-  const headX = cx * w;
-  const neckTopY = headY * h + headRy;
-  const neckBotY = shoulderY * h;
-  solidLimb(headX, neckTopY, headX, neckBotY, Math.round(18 * s));
+  // --- 4. Arms (left: watch, right: yellow glove) ---
+  const armW = Math.round(24 * s);
 
-  // --- Arms (chibi shortened forearms) ---
+  // Left arm
   if (opts.lArm) {
     const elbowX = opts.lArm[0].x * w, elbowY = opts.lArm[0].y * h;
-    let wristX = opts.lArm[1].x * w, wristY = opts.lArm[1].y * h;
-    // Shorten forearm by 30%
-    wristX = elbowX + (wristX - elbowX) * (1 - LIMB_SHORTEN_FACTOR);
-    wristY = elbowY + (wristY - elbowY) * (1 - LIMB_SHORTEN_FACTOR);
-    solidLimb(lShoulderX * w, shoulderY * h, elbowX, elbowY, LIMB_W);
-    solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - Math.round(6 * s));
-    // Mitten hand
-    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
-    ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(20 * s), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-    ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(17 * s), 0, Math.PI * 2); ctx.fill();
+    const wristX = opts.lArm[1].x * w, wristY = opts.lArm[1].y * h;
+    drawLimb(lShoulderX * w, shoulderY * h, elbowX, elbowY, armW, colors.skin);
+    drawLimb(elbowX, elbowY, wristX, wristY, armW, colors.skin);
+
+    // Wristwatch
+    const watchX = wristX - (wristX - elbowX) * 0.2;
+    const watchY = wristY - (wristY - elbowY) * 0.2;
+    drawLimb(watchX, watchY, wristX, wristY, armW + 4 * s, colors.watch);
+
+    // Left palm (skin)
+    ctx.fillStyle = colors.skin; ctx.strokeStyle = colors.outline;
+    ctx.beginPath(); ctx.arc(wristX, wristY, armW * 0.7, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
   }
+
+  // Right arm
   if (opts.rArm) {
     const elbowX = opts.rArm[0].x * w, elbowY = opts.rArm[0].y * h;
-    let wristX = opts.rArm[1].x * w, wristY = opts.rArm[1].y * h;
-    wristX = elbowX + (wristX - elbowX) * (1 - LIMB_SHORTEN_FACTOR);
-    wristY = elbowY + (wristY - elbowY) * (1 - LIMB_SHORTEN_FACTOR);
-    solidLimb(rShoulderX * w, shoulderY * h, elbowX, elbowY, LIMB_W);
-    solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - Math.round(6 * s));
-    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
-    ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(20 * s), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-    ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(17 * s), 0, Math.PI * 2); ctx.fill();
+    const wristX = opts.rArm[1].x * w, wristY = opts.rArm[1].y * h;
+    drawLimb(rShoulderX * w, shoulderY * h, elbowX, elbowY, armW, colors.skin);
+    drawLimb(elbowX, elbowY, wristX, wristY, armW, colors.skin);
+
+    // Yellow glove
+    const gloveStartX = wristX - (wristX - elbowX) * 0.3;
+    const gloveStartY = wristY - (wristY - elbowY) * 0.3;
+    drawLimb(gloveStartX, gloveStartY, wristX, wristY, armW + 2 * s, colors.glove);
+
+    // Right palm (yellow)
+    ctx.fillStyle = colors.glove; ctx.strokeStyle = colors.outline;
+    ctx.beginPath(); ctx.arc(wristX, wristY, armW * 0.8, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
   }
 
-  // --- Legs (chibi shortened lower legs) ---
-  const hipCx = (cx + bodyTilt) * w;
-  const lKneeX = (cx - legSpread + bodyTilt) * w, lKneeY = kneeY * h;
-  const rKneeX = (cx + legSpread + bodyTilt) * w, rKneeY = kneeY * h;
-  let lFootX = lKneeX, lFootY = footY * h;
-  let rFootX = rKneeX, rFootY = footY * h;
-  // Shorten lower legs by 30%
-  lFootX = lKneeX + (lFootX - lKneeX) * (1 - LIMB_SHORTEN_FACTOR);
-  lFootY = lKneeY + (lFootY - lKneeY) * (1 - LIMB_SHORTEN_FACTOR);
-  rFootX = rKneeX + (rFootX - rKneeX) * (1 - LIMB_SHORTEN_FACTOR);
-  rFootY = rKneeY + (rFootY - rKneeY) * (1 - LIMB_SHORTEN_FACTOR);
-
-  // Upper legs
-  solidLimb(hipCx, hipY * h, lKneeX, lKneeY, LIMB_W + Math.round(4 * s));
-  solidLimb(hipCx, hipY * h, rKneeX, rKneeY, LIMB_W + Math.round(4 * s));
-  // Lower legs
-  solidLimb(lKneeX, lKneeY, lFootX, lFootY, LIMB_W);
-  solidLimb(rKneeX, rKneeY, rFootX, rFootY, LIMB_W);
-
-  // Shoe feet (rounded ellipses)
-  for (const [fx, fy] of [[lFootX, lFootY], [rFootX, rFootY]]) {
-    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
-    ctx.beginPath(); ctx.ellipse(fx, fy, Math.round(26 * s), Math.round(16 * s), 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-    ctx.beginPath(); ctx.ellipse(fx, fy, Math.round(22 * s), Math.round(13 * s), 0, 0, Math.PI * 2); ctx.fill();
-  }
-
-  // --- Cute Head (headRx × headRy radius) ---
+  // --- 5. Head (hat, sunglasses, beard) ---
+  const headX = cx * w;
   const headCY = headY * h;
+  const headR = Math.round(35 * s);
 
-  // Head border
-  ctx.save();
-  ctx.translate(headX, headCY);
-  ctx.scale(1, headRy / headRx);
-  ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
-  ctx.beginPath(); ctx.arc(0, 0, headRx + 3, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-
-  // Head shape (solid filled oval)
-  ctx.save();
-  ctx.translate(headX, headCY);
-  ctx.scale(1, headRy / headRx);
-  ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.95)`;
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(0, 0, headRx, 0, Math.PI * 2);
-  ctx.fill(); ctx.stroke();
-  ctx.restore();
-
-  // Hair (cute spiky strokes)
-  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.85)`;
-  ctx.lineWidth = Math.max(1, Math.round(3 * s)); ctx.lineCap = 'round';
-  for (let i = -5; i <= 5; i++) {
-    const hx = headX + i * 9 * s;
-    const hy = headCY - headRy - 1;
-    ctx.beginPath();
-    ctx.moveTo(hx, hy + 8 * s);
-    ctx.quadraticCurveTo(hx + i * 1.5 * s, hy - 10 * s, hx + i * 3 * s, hy - 1);
-    ctx.stroke();
-  }
-
-  // Ears (round, solid)
-  const earY = headCY - 1;
-  for (const side of [-1, 1]) {
-    const earCx = headX + side * (headRx + Math.round(8 * s));
-    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.8)`;
-    ctx.beginPath(); ctx.arc(earCx, earY, Math.round(12 * s), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
-    ctx.beginPath(); ctx.arc(earCx, earY, Math.round(10 * s), 0, Math.PI * 2); ctx.fill();
-  }
-
-  // Big cute eyes (solid white with large pupils)
-  const eyeOffX = Math.round(18 * s), eyeOffY = -Math.round(5 * s), eyeW = Math.round(13 * s), eyeH = Math.round(10 * s);
-  // Eye whites
-  ctx.fillStyle = 'rgb(255, 255, 255)';
-  ctx.beginPath(); ctx.ellipse(headX - eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(headX + eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
-  // Eye outlines
-  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.7)`;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.ellipse(headX - eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(headX + eyeOffX, headCY + eyeOffY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.stroke();
-  // Large pupils
-  ctx.fillStyle = `rgb(${darkR}, ${darkG}, ${darkB})`;
-  ctx.beginPath(); ctx.arc(headX - eyeOffX, headCY + eyeOffY, Math.round(6 * s), 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(headX + eyeOffX, headCY + eyeOffY, Math.round(6 * s), 0, Math.PI * 2); ctx.fill();
-  // Eye sparkle
-  ctx.fillStyle = 'rgb(255, 255, 255)';
-  const sp = Math.round(3 * s), sr = Math.max(1, Math.round(2.5 * s));
-  ctx.beginPath(); ctx.arc(headX - eyeOffX + sp, headCY + eyeOffY - sp, sr, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(headX + eyeOffX + sp, headCY + eyeOffY - sp, sr, 0, Math.PI * 2); ctx.fill();
-
-  // Nose (white highlight to stand out against any character color)
-  ctx.fillStyle = `rgba(255, 255, 255, 0.55)`;
-  ctx.beginPath(); ctx.arc(headX, headCY + Math.round(9 * s), Math.max(2, Math.round(4 * s)), 0, Math.PI * 2); ctx.fill();
-
-  // Mouth (cute smile arc)
-  ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.8)`;
-  ctx.lineWidth = Math.max(1, Math.round(2.5 * s)); ctx.lineCap = 'round';
+  // Face base (white skin)
+  ctx.fillStyle = colors.skin; ctx.strokeStyle = colors.outline; ctx.lineWidth = Math.round(5 * s);
   ctx.beginPath();
-  ctx.arc(headX, headCY + Math.round(21 * s), Math.round(13 * s), 0.15 * Math.PI, 0.85 * Math.PI);
-  ctx.stroke();
+  ctx.ellipse(headX, headCY, headR * 0.9, headR * 1.1, 0, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
 
-  // Blush (cute rosy cheeks)
-  ctx.fillStyle = 'rgba(255, 150, 180, 0.35)';
-  ctx.beginPath(); ctx.ellipse(headX - Math.round(33 * s), headCY + Math.round(10 * s), Math.round(12 * s), Math.round(7 * s), 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(headX + Math.round(33 * s), headCY + Math.round(10 * s), Math.round(12 * s), Math.round(7 * s), 0, 0, Math.PI * 2); ctx.fill();
+  // Beard (lower face)
+  ctx.fillStyle = colors.hair;
+  ctx.beginPath();
+  ctx.arc(headX, headCY + headR * 0.1, headR * 0.85, 0.1 * Math.PI, 0.9 * Math.PI);
+  ctx.lineTo(headX, headCY + headR * 0.5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Mouth gap in the beard
+  ctx.fillStyle = colors.skin;
+  ctx.beginPath();
+  ctx.ellipse(headX, headCY + headR * 0.7, headR * 0.25, headR * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sunglasses
+  ctx.fillStyle = colors.watch;
+  const glassW = headR * 0.7;
+  const glassH = headR * 0.4;
+  const glassY = headCY - headR * 0.1;
+  // Left lens
+  ctx.beginPath(); ctx.roundRect(headX - glassW - 2*s, glassY, glassW, glassH, 5*s); ctx.fill();
+  // Right lens
+  ctx.beginPath(); ctx.roundRect(headX + 2*s, glassY, glassW, glassH, 5*s); ctx.fill();
+  // Bridge
+  ctx.strokeStyle = colors.watch; ctx.lineWidth = 4*s;
+  ctx.beginPath(); ctx.moveTo(headX - 5*s, glassY + glassH/2); ctx.lineTo(headX + 5*s, glassY + glassH/2); ctx.stroke();
+
+  // Blue hat
+  ctx.fillStyle = colors.hat; ctx.strokeStyle = colors.outline;
+  ctx.beginPath();
+  ctx.arc(headX, headCY - headR * 0.5, headR * 0.9, Math.PI, 0);
+  ctx.lineTo(headX + headR, headCY - headR * 0.4);
+  ctx.lineTo(headX - headR, headCY - headR * 0.4);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+}
+
+// ===== Convert dynamic landmarks to fixed-proportion avatar options =====
+function landmarksToAvatarOpts(landmarks) {
+  if (!landmarks) return {};
+
+  // Fixed model base points (matching drawStickFigure internal proportions)
+  const cx = 0.5;
+  const shoulderY = 0.32;
+  const lShoulderFixed = { x: cx - 0.12, y: shoulderY };
+  const rShoulderFixed = { x: cx + 0.12, y: shoulderY };
+
+  // Fixed arm lengths
+  const upperArmLen = 0.15;
+  const lowerArmLen = 0.12;
+
+  // Get real keypoints
+  const lShoulder = landmarks[11], rShoulder = landmarks[12];
+  const lElbow = landmarks[13], rElbow = landmarks[14];
+  const lWrist = landmarks[15], rWrist = landmarks[16];
+  const lHip = landmarks[23], rHip = landmarks[24];
+  const lKnee = landmarks[25], rKnee = landmarks[26];
+
+  const opts = {};
+
+  // Squat detection: hip-to-knee Y distance shrinks
+  if (lHip && lKnee && rHip && rKnee) {
+     const hipKneeDist = Math.abs((lHip.y + rHip.y)/2 - (lKnee.y + rKnee.y)/2);
+     if (hipKneeDist < 0.15) {
+         opts.squat = true;
+     }
+  }
+
+  // Compute arm angle and generate proportional coordinates
+  function calcArm(shoulderReal, elbowReal, wristReal, shoulderFixed) {
+    if (!shoulderReal || !elbowReal || !wristReal) return null;
+
+    // Upper arm vector and angle
+    const dx1 = elbowReal.x - shoulderReal.x;
+    const dy1 = elbowReal.y - shoulderReal.y;
+    const angle1 = Math.atan2(dy1, dx1);
+    const elbowFixed = {
+      x: shoulderFixed.x + Math.cos(angle1) * upperArmLen,
+      y: shoulderFixed.y + Math.sin(angle1) * upperArmLen
+    };
+
+    // Forearm vector and angle
+    const dx2 = wristReal.x - elbowReal.x;
+    const dy2 = wristReal.y - elbowReal.y;
+    const angle2 = Math.atan2(dy2, dx2);
+    const wristFixed = {
+      x: elbowFixed.x + Math.cos(angle2) * lowerArmLen,
+      y: elbowFixed.y + Math.sin(angle2) * lowerArmLen
+    };
+
+    return [elbowFixed, wristFixed];
+  }
+
+  opts.lArm = calcArm(lShoulder, lElbow, lWrist, lShoulderFixed);
+  opts.rArm = calcArm(rShoulder, rElbow, rWrist, rShoulderFixed);
+
+  // Lean detection
+  if (lShoulder && rShoulder && lHip && rHip) {
+     const shoulderCenter = (lShoulder.x + rShoulder.x) / 2;
+     const hipCenter = (lHip.x + rHip.x) / 2;
+     const lean = shoulderCenter - hipCenter;
+     if (lean > 0.05) opts.leanLeft = true;
+     if (lean < -0.05) opts.leanRight = true;
+  }
+
+  return opts;
 }
 
 // ===== Song / Beat Map Definitions =====
@@ -1364,23 +1374,10 @@ function onPoseResults(results) {
   if (results.poseLandmarks) {
     currentPoseLandmarks = results.poseLandmarks;
 
-    // Apply a normalizing transform so the avatar is always a fixed screen size,
-    // regardless of how close or far the player stands from the camera.
-    const { scale, tx, ty } = computeAvatarTransform(results.poseLandmarks, w, h);
-    poseCtx.save();
-    poseCtx.translate(tx, ty);
-    poseCtx.scale(scale, scale);
-
-    drawNeonBody(poseCtx, results.poseLandmarks, w, h);
-
-    if (results.leftHandLandmarks) {
-      drawNeonHand(poseCtx, results.leftHandLandmarks, w, h);
-    }
-    if (results.rightHandLandmarks) {
-      drawNeonHand(poseCtx, results.rightHandLandmarks, w, h);
-    }
-
-    poseCtx.restore();
+    // Convert dynamic landmarks to fixed-proportion avatar options,
+    // then render the Just Dance style avatar at a constant size.
+    const playerOpts = landmarksToAvatarOpts(results.poseLandmarks);
+    drawStickFigure(poseCtx, w, h, playerOpts, 'player');
   }
 }
 
