@@ -542,8 +542,12 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   drawLimb(rFootX, footY * h - 20 * s, rFootX, footY * h, limbW + 4 * s, colors.boots);
   // Soles (rounded)
   ctx.fillStyle = colors.outline;
-  ctx.beginPath(); ctx.roundRect(lFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s, 4*s); ctx.fill();
-  ctx.beginPath(); ctx.roundRect(rFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s, 4*s); ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(lFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s, 4*s);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(rFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s, 4*s);
+  ctx.fill();
 
   // --- Neck (connects head to shoulders) ---
   const neckW = Math.round(18 * s);
@@ -561,28 +565,23 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.roundRect(lShoulderX * w - pad, shoulderY * h, (rShoulderX - lShoulderX) * w + 2 * pad, (hipY - shoulderY) * h, torsoR);
   ctx.fill(); ctx.stroke();
 
-  // Black vest (two open flaps with rounded corners)
+  // Black vest (two open flaps with rounded stroke corners)
   ctx.fillStyle = colors.vest;
+  ctx.lineJoin = 'round';
   // Left vest flap
   ctx.beginPath();
-  ctx.moveTo(lShoulderX * w - pad + torsoR, shoulderY * h);
+  ctx.moveTo(lShoulderX * w - pad, shoulderY * h);
   ctx.lineTo(cx * w - 10*s, shoulderY * h + 20*s);
-  ctx.quadraticCurveTo(cx * w - 18*s, hipY * h, cx * w - 20*s, hipY * h);
+  ctx.lineTo(cx * w - 20*s, hipY * h);
   ctx.lineTo(lShoulderX * w - pad + 10*s, hipY * h);
-  ctx.quadraticCurveTo(lShoulderX * w - pad, hipY * h, lShoulderX * w - pad, hipY * h - torsoR);
-  ctx.lineTo(lShoulderX * w - pad, shoulderY * h + torsoR);
-  ctx.quadraticCurveTo(lShoulderX * w - pad, shoulderY * h, lShoulderX * w - pad + torsoR, shoulderY * h);
   ctx.closePath();
   ctx.fill(); ctx.stroke();
   // Right vest flap
   ctx.beginPath();
-  ctx.moveTo(rShoulderX * w + pad - torsoR, shoulderY * h);
+  ctx.moveTo(rShoulderX * w + pad, shoulderY * h);
   ctx.lineTo(cx * w + 10*s, shoulderY * h + 20*s);
-  ctx.quadraticCurveTo(cx * w + 18*s, hipY * h, cx * w + 20*s, hipY * h);
+  ctx.lineTo(cx * w + 20*s, hipY * h);
   ctx.lineTo(rShoulderX * w + pad - 10*s, hipY * h);
-  ctx.quadraticCurveTo(rShoulderX * w + pad, hipY * h, rShoulderX * w + pad, hipY * h - torsoR);
-  ctx.lineTo(rShoulderX * w + pad, shoulderY * h + torsoR);
-  ctx.quadraticCurveTo(rShoulderX * w + pad, shoulderY * h, rShoulderX * w + pad - torsoR, shoulderY * h);
   ctx.closePath();
   ctx.fill(); ctx.stroke();
 
@@ -667,7 +666,7 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.arc(headX, headCY - headR * 0.5, headR * 0.9, Math.PI, 0);
   ctx.quadraticCurveTo(headX + headR * 1.05, headCY - headR * 0.35, headX + headR, headCY - headR * 0.3);
   ctx.quadraticCurveTo(headX, headCY - headR * 0.25, headX - headR, headCY - headR * 0.3);
-  ctx.quadraticCurveTo(headX - headR * 1.05, headCY - headR * 0.35, headX - headR * 0.9, headCY - headR * 0.5 - headR * 0.9 * Math.sin(0));
+  ctx.quadraticCurveTo(headX - headR * 1.05, headCY - headR * 0.35, headX - headR * 0.9, headCY - headR * 0.5);
   ctx.closePath();
   ctx.fill(); ctx.stroke();
 
