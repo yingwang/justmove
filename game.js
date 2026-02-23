@@ -453,16 +453,28 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   const headRx = Math.round(55 * s);
   const headRy = Math.round(65 * s);
 
-  // Helper: draw a solid chibi limb with dark 2px stroke border
+  // Helper: draw a solid chibi limb with neon glow border (Just Dance style)
   function solidLimb(x1, y1, x2, y2, width) {
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    // Wide outer glow
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.22)`;
+    ctx.lineWidth = width + 22;
+    ctx.stroke();
+    // Mid glow
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.18)`;
+    ctx.lineWidth = width + 12;
+    ctx.stroke();
     // Dark border
     ctx.beginPath();
     ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
-    ctx.lineWidth = width + 4;
+    ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.95)`;
+    ctx.lineWidth = width + 6;
     ctx.stroke();
     // Solid fill
     ctx.beginPath();
@@ -470,20 +482,31 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
     ctx.lineWidth = width;
     ctx.stroke();
+    // Bright center highlight
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = `rgba(255, 255, 255, 0.42)`;
+    ctx.lineWidth = width * 0.28;
+    ctx.stroke();
     ctx.restore();
   }
 
-  // Helper: draw a filled joint circle
-  function solidJoint(x, y, radius) {
-    ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
-    ctx.beginPath();
-    ctx.arc(x, y, radius + 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // Ground spotlight (Just Dance stage effect)
+  const footCX = cx * w;
+  const footCY = footY * h + Math.round(8 * s);
+  const spotRx = Math.round(110 * s);
+  const spotRy = Math.round(28 * s);
+  const spotGrad = ctx.createRadialGradient(footCX, footCY, 0, footCX, footCY, spotRx);
+  spotGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.30)`);
+  spotGrad.addColorStop(0.55, `rgba(${r}, ${g}, ${b}, 0.10)`);
+  spotGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.save();
+  ctx.scale(1, spotRy / spotRx);
+  ctx.beginPath();
+  ctx.arc(footCX, footCY * (spotRx / spotRy), spotRx, 0, Math.PI * 2);
+  ctx.fillStyle = spotGrad;
+  ctx.fill();
+  ctx.restore();
 
   // --- Filled rounded torso ---
   const lsx = lShoulderX * w, lsy = shoulderY * h;
@@ -533,8 +556,6 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     wristY = elbowY + (wristY - elbowY) * (1 - LIMB_SHORTEN_FACTOR);
     solidLimb(lShoulderX * w, shoulderY * h, elbowX, elbowY, LIMB_W);
     solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - Math.round(6 * s));
-    // Elbow joint
-    solidJoint(elbowX, elbowY, Math.round(18 * s));
     // Mitten hand
     ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
     ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(20 * s), 0, Math.PI * 2); ctx.fill();
@@ -548,16 +569,11 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     wristY = elbowY + (wristY - elbowY) * (1 - LIMB_SHORTEN_FACTOR);
     solidLimb(rShoulderX * w, shoulderY * h, elbowX, elbowY, LIMB_W);
     solidLimb(elbowX, elbowY, wristX, wristY, LIMB_W - Math.round(6 * s));
-    solidJoint(elbowX, elbowY, Math.round(18 * s));
     ctx.fillStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`;
     ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(20 * s), 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
     ctx.beginPath(); ctx.arc(wristX, wristY, Math.round(17 * s), 0, Math.PI * 2); ctx.fill();
   }
-
-  // Shoulder joints
-  solidJoint(lShoulderX * w, shoulderY * h, Math.round(20 * s));
-  solidJoint(rShoulderX * w, shoulderY * h, Math.round(20 * s));
 
   // --- Legs (chibi shortened lower legs) ---
   const hipCx = (cx + bodyTilt) * w;
@@ -577,12 +593,6 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   // Lower legs
   solidLimb(lKneeX, lKneeY, lFootX, lFootY, LIMB_W);
   solidLimb(rKneeX, rKneeY, rFootX, rFootY, LIMB_W);
-
-  // Hip joints
-  solidJoint(hipCx, hipY * h, Math.round(22 * s));
-  // Knee joints
-  solidJoint(lKneeX, lKneeY, Math.round(18 * s));
-  solidJoint(rKneeX, rKneeY, Math.round(18 * s));
 
   // Shoe feet (rounded ellipses)
   for (const [fx, fy] of [[lFootX, lFootY], [rFootX, rFootY]]) {
@@ -1456,7 +1466,7 @@ function computeAvatarTransform(landmarks, w, h) {
     maxY = Math.max(maxY, lm.y);
   }
 
-  // Add padding above the nose to include the top of the head
+  // Add padding above the nose to include the full top of the head
   const bodySpanY = maxY - minY;
   minY = Math.max(0, minY - bodySpanY * AVATAR_HEAD_PADDING_FACTOR);
 
@@ -1476,12 +1486,19 @@ function computeAvatarTransform(landmarks, w, h) {
   const targetTx = w / 2 - bodyCX * targetScale;
   const targetTy = h / 2 - bodyCY * targetScale;
 
-  // Smooth interpolation – snap on first frame, lerp on subsequent frames
-  const alpha = avatarTransform.initialized ? AVATAR_LERP_ALPHA : 1.0;
-  avatarTransform.scale += (targetScale - avatarTransform.scale) * alpha;
-  avatarTransform.tx += (targetTx - avatarTransform.tx) * alpha;
-  avatarTransform.ty += (targetTy - avatarTransform.ty) * alpha;
-  avatarTransform.initialized = true;
+  if (!avatarTransform.initialized) {
+    // First detection: snap to target and lock the scale for fixed-size avatar
+    avatarTransform.scale = targetScale;
+    avatarTransform.tx = targetTx;
+    avatarTransform.ty = targetTy;
+    avatarTransform.initialized = true;
+  } else {
+    // Scale stays locked at the value set on first detection (fixed-size avatar –
+    // size does not change as the player moves toward or away from the camera).
+    // Only smoothly update position so the avatar follows the player's center.
+    avatarTransform.tx += (targetTx - avatarTransform.tx) * AVATAR_LERP_ALPHA;
+    avatarTransform.ty += (targetTy - avatarTransform.ty) * AVATAR_LERP_ALPHA;
+  }
 
   return avatarTransform;
 }
@@ -1493,11 +1510,19 @@ function drawNeonLimb(ctx, x1, y1, x2, y2, width, color, glowIntensity) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  // Soft outer glow (subtle)
+  // Wide outer glow (professional neon halo effect)
   ctx.beginPath();
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
-  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.12 * glowIntensity})`;
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.22 * glowIntensity})`;
+  ctx.lineWidth = width + 26;
+  ctx.stroke();
+
+  // Mid glow ring
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.18 * glowIntensity})`;
   ctx.lineWidth = width + 14;
   ctx.stroke();
 
@@ -1505,8 +1530,8 @@ function drawNeonLimb(ctx, x1, y1, x2, y2, width, color, glowIntensity) {
   ctx.beginPath();
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
-  ctx.strokeStyle = `rgba(${Math.max(0, r - 80)}, ${Math.max(0, g - 80)}, ${Math.max(0, b - 80)}, 0.9)`;
-  ctx.lineWidth = width + 5;
+  ctx.strokeStyle = `rgba(${Math.max(0, r - 80)}, ${Math.max(0, g - 80)}, ${Math.max(0, b - 80)}, 0.95)`;
+  ctx.lineWidth = width + 6;
   ctx.stroke();
 
   // Solid filled limb (fully opaque, cartoon body part)
@@ -1521,8 +1546,8 @@ function drawNeonLimb(ctx, x1, y1, x2, y2, width, color, glowIntensity) {
   ctx.beginPath();
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
-  ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * glowIntensity})`;
-  ctx.lineWidth = width * 0.3;
+  ctx.strokeStyle = `rgba(255, 255, 255, ${0.45 * glowIntensity})`;
+  ctx.lineWidth = width * 0.28;
   ctx.stroke();
 
   ctx.restore();
@@ -1552,6 +1577,33 @@ function drawNeonBody(ctx, landmarks, w, h) {
   const pulse = gameState === 'playing' ? 0.8 + 0.2 * Math.sin(performance.now() * 0.005) : 1;
   const glowIntensity = gameState === 'playing' ? (0.7 + poseMatchScore * 0.3) * pulse : 0.8;
   const r = color.r, g = color.g, b = color.b;
+
+  // --- Ground spotlight (Just Dance stage effect) ---
+  const lAnkle = landmarks[27], rAnkle = landmarks[28];
+  const lHipG = landmarks[23], rHipG = landmarks[24];
+  const lShoulderG = landmarks[11], rShoulderG = landmarks[12];
+  if (lShoulderG && rShoulderG && lShoulderG.visibility > 0.4 && rShoulderG.visibility > 0.4) {
+    const shoulderW = Math.abs(rShoulderG.x - lShoulderG.x) * w;
+    const footCX = lAnkle && rAnkle && lAnkle.visibility > 0.3 && rAnkle.visibility > 0.3
+      ? (lAnkle.x + rAnkle.x) / 2 * w
+      : (lShoulderG.x + rShoulderG.x) / 2 * w;
+    const footCY = lAnkle && lAnkle.visibility > 0.3
+      ? lAnkle.y * h + 10
+      : (lHipG && lHipG.visibility > 0.3 ? lHipG.y * h + shoulderW * 1.2 : h * 0.9);
+    const rx = shoulderW * 1.1;
+    const ry = shoulderW * 0.28;
+    const spotGrad = ctx.createRadialGradient(footCX, footCY, 0, footCX, footCY, rx);
+    spotGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${0.28 * glowIntensity})`);
+    spotGrad.addColorStop(0.6, `rgba(${r}, ${g}, ${b}, ${0.1 * glowIntensity})`);
+    spotGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.scale(1, ry / rx);
+    ctx.beginPath();
+    ctx.arc(footCX, footCY * (rx / ry), rx, 0, Math.PI * 2);
+    ctx.fillStyle = spotGrad;
+    ctx.fill();
+    ctx.restore();
+  }
 
   // --- Filled rounded torso (cute body shape) ---
   const lShoulder = landmarks[11], rShoulder = landmarks[12];
@@ -1633,14 +1685,6 @@ function drawNeonBody(ctx, landmarks, w, h) {
     }
 
     drawNeonLimb(ctx, ax, ay, bx, by, baseWidth, color, glowIntensity);
-  }
-
-  // --- Joint circles at elbows, knees, shoulders, hips for smooth connections ---
-  for (const idx of JOINT_INDICES) {
-    const lm = landmarks[idx];
-    if (!lm || lm.visibility < 0.5) continue;
-    const jr = JOINT_SIZES[idx] || 16;
-    drawNeonJoint(ctx, lm.x * w, lm.y * h, jr, color, glowIntensity);
   }
 
   // --- Cute round mitten hands at wrists (15=left, 16=right) ---
