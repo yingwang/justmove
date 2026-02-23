@@ -39,6 +39,7 @@ let audioContext = null;
 let gameStartTime = 0;
 let lastFrameTime = 0;
 let animFrameId = null;
+let countdownIntervalId = null;
 
 // Score state
 let score = 0;
@@ -70,6 +71,9 @@ let customAudioReady = false;
 let particles = [];
 let lastRatingTime = 0;
 let lastRating = '';
+let ratingTimeoutId = null;
+let timingHintTimeoutId = null;
+let milestoneTimeoutId = null;
 let beatPulse = 0;
 let currentSongBpm = 120;
 
@@ -374,6 +378,36 @@ const POSES = {
 };
 
 const POSE_KEYS = Object.keys(POSES);
+
+// ===== Combo Milestones =====
+const COMBO_MILESTONES = new Set([10, 25, 50, 100, 200]);
+
+// ===== High Score Helpers =====
+function getHighScore(songId) {
+  try {
+    const raw = localStorage.getItem(`jm_hs_${songId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveHighScore(songId, data) {
+  try {
+    localStorage.setItem(`jm_hs_${songId}`, JSON.stringify(data));
+  } catch { /* storage unavailable */ }
+}
+
+function updateSongButtonsWithHighScores() {
+  document.querySelectorAll('.song-btn[data-song]').forEach((btn) => {
+    const hs = getHighScore(btn.dataset.song);
+    let hsEl = btn.querySelector('.song-hs');
+    if (!hsEl) {
+      hsEl = document.createElement('span');
+      hsEl.className = 'song-hs';
+      btn.appendChild(hsEl);
+    }
+    hsEl.textContent = hs ? `${hs.grade}  ${hs.score.toLocaleString()}` : '';
+  });
+}
 
 // ===== Helper Functions =====
 function dist2d(a, b) {
@@ -910,8 +944,11 @@ async function loadSongFromUrl(url) {
   if (!response.ok) throw new Error('Failed to fetch audio');
   const arrayBuffer = await response.arrayBuffer();
   const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
-  songAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
-  tempCtx.close();
+  try {
+    songAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+  } finally {
+    tempCtx.close();
+  }
   return songAudioBuffer;
 }
 
@@ -940,8 +977,11 @@ async function loadCustomAudio(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
-    customAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
-    tempCtx.close();
+    try {
+      customAudioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+    } finally {
+      tempCtx.close();
+    }
 
     statusEl.textContent = 'Detecting BPM...';
     customAudioBpm = detectBPM(customAudioBuffer);
@@ -1277,7 +1317,12 @@ async function initMediaPipe() {
     camera = new Camera(webcam, {
       onFrame: async () => {
         if (holistic) {
-          await holistic.send({ image: webcam });
+          try {
+            await holistic.send({ image: webcam });
+          } catch (err) {
+            // Single-frame errors are transient; log but keep the camera loop running
+            console.warn('Pose detection frame error:', err);
+          }
         }
       },
       width: 1280,
@@ -1294,8 +1339,10 @@ async function initMediaPipe() {
 }
 
 function onPoseResults(results) {
-  poseCanvas.width = webcam.videoWidth || 1280;
-  poseCanvas.height = webcam.videoHeight || 720;
+  const vw = webcam.videoWidth || 1280;
+  const vh = webcam.videoHeight || 720;
+  if (poseCanvas.width !== vw) poseCanvas.width = vw;
+  if (poseCanvas.height !== vh) poseCanvas.height = vh;
   const w = poseCanvas.width;
   const h = poseCanvas.height;
 
@@ -1748,6 +1795,7 @@ async function startGame() {
   currentBeatIndex = 0;
   poseMatchScore = 0;
   songAudioBuffer = null;
+  audioNodes = {};
 
   // Setup canvases
   gameCanvas.width = window.innerWidth;
@@ -1866,7 +1914,7 @@ function runCountdown(callback) {
   playCountdownBeep(false);
   triggerCountdownPop(false);
 
-  const interval = setInterval(() => {
+  countdownIntervalId = setInterval(() => {
     count--;
     if (count > 0) {
       countdownNumber.dataset.count = count;
@@ -1879,7 +1927,8 @@ function runCountdown(callback) {
       playCountdownBeep(true);
       triggerCountdownPop(true);
     } else {
-      clearInterval(interval);
+      clearInterval(countdownIntervalId);
+      countdownIntervalId = null;
       countdownEl.classList.add('hidden');
       callback();
     }
@@ -1953,12 +2002,13 @@ function processBeats(elapsed) {
 
         // Score when near the beat time
         if (Math.abs(elapsed - beat.time) < lookAheadWindow) {
+          const timingOffset = elapsed - beat.time;
           if (matchValue >= 0.8) {
-            scoreBeat(beat, 'perfect');
+            scoreBeat(beat, 'perfect', timingOffset);
           } else if (matchValue >= 0.6) {
-            scoreBeat(beat, 'great');
+            scoreBeat(beat, 'great', timingOffset);
           } else if (matchValue >= 0.4) {
-            scoreBeat(beat, 'good');
+            scoreBeat(beat, 'good', timingOffset);
           }
         }
       }
@@ -1979,7 +2029,7 @@ function processBeats(elapsed) {
   }
 }
 
-function scoreBeat(beat, rating) {
+function scoreBeat(beat, rating, timingOffset = 0) {
   beat.scored = true;
   beat.hit = rating !== 'miss';
   beat.rating = rating;
@@ -1993,13 +2043,20 @@ function scoreBeat(beat, rating) {
     combo++;
     if (combo > maxCombo) maxCombo = combo;
     multiplier = Math.min(8, 1 + Math.floor(combo / 5));
+    if (COMBO_MILESTONES.has(combo)) {
+      showComboMilestone(combo);
+    }
   }
 
   score += basePoints[rating] * multiplier;
   ratings[rating]++;
 
   playHitSound(rating);
-  showRating(rating);
+  // Show EARLY/LATE hint when timing is off by more than 150 ms (but not for perfect)
+  const timingHint = (rating !== 'perfect' && Math.abs(timingOffset) > 0.15)
+    ? (timingOffset < 0 ? 'EARLY' : 'LATE')
+    : null;
+  showRating(rating, timingHint);
   updateHUD();
 
   // Spawn particles on hit
@@ -2016,7 +2073,7 @@ function scoreBeat(beat, rating) {
   }
 }
 
-function showRating(rating) {
+function showRating(rating, timingHint = null) {
   lastRatingTime = performance.now();
   lastRating = rating;
   ratingPopup.textContent = rating.toUpperCase();
@@ -2025,9 +2082,42 @@ function showRating(rating) {
   if (combo >= 20 && rating !== 'miss') {
     ratingPopup.textContent = rating.toUpperCase() + ' \u2605';
   }
-  setTimeout(() => {
+  if (ratingTimeoutId) clearTimeout(ratingTimeoutId);
+  ratingTimeoutId = setTimeout(() => {
     ratingPopup.className = '';
+    ratingTimeoutId = null;
   }, 700);
+
+  // Timing hint (EARLY / LATE)
+  const timingEl = document.getElementById('timing-hint');
+  if (timingEl) {
+    if (timingHint) {
+      timingEl.textContent = timingHint;
+      timingEl.className = `show ${timingHint.toLowerCase()}`;
+    } else {
+      timingEl.className = '';
+    }
+    if (timingHintTimeoutId) clearTimeout(timingHintTimeoutId);
+    timingHintTimeoutId = setTimeout(() => {
+      timingEl.className = '';
+      timingHintTimeoutId = null;
+    }, 600);
+  }
+}
+
+function showComboMilestone(comboCount) {
+  const el = document.getElementById('combo-milestone');
+  if (!el) return;
+  el.textContent = `${comboCount} COMBO!`;
+  // Restart animation by toggling class
+  el.className = '';
+  void el.offsetWidth; // force reflow
+  el.className = 'show';
+  if (milestoneTimeoutId) clearTimeout(milestoneTimeoutId);
+  milestoneTimeoutId = setTimeout(() => {
+    el.className = '';
+    milestoneTimeoutId = null;
+  }, 1400);
 }
 
 function updateHUD() {
@@ -2045,12 +2135,9 @@ function updatePoseMatch(elapsed) {
 }
 
 function renderBeatTimeline(elapsed) {
-  // Clear old markers
-  beatMarkersEl.innerHTML = '';
-
-  const timelineWidth = beatMarkersEl.parentElement.offsetWidth;
   const visibleWindow = 4; // seconds visible ahead
   const hitZonePos = 0.1; // 10% from left
+  const fragment = document.createDocumentFragment();
 
   for (let i = 0; i < beatMap.length; i++) {
     const beat = beatMap[i];
@@ -2072,13 +2159,19 @@ function renderBeatTimeline(elapsed) {
     icon.textContent = POSES[beat.pose].icon;
     marker.appendChild(icon);
 
-    beatMarkersEl.appendChild(marker);
+    fragment.appendChild(marker);
   }
+
+  // Single DOM write: clear + insert all markers in one operation
+  beatMarkersEl.textContent = '';
+  beatMarkersEl.appendChild(fragment);
 }
 
 function renderGameEffects(elapsed) {
-  const cw = gameCanvas.width = window.innerWidth;
-  const ch = gameCanvas.height = window.innerHeight;
+  const cw = window.innerWidth;
+  const ch = window.innerHeight;
+  if (gameCanvas.width !== cw) gameCanvas.width = cw;
+  if (gameCanvas.height !== ch) gameCanvas.height = ch;
   gameCtx.clearRect(0, 0, cw, ch);
 
   // --- Beat pulse (background throbs with music) ---
@@ -2139,8 +2232,12 @@ function renderGameEffects(elapsed) {
 }
 
 // --- Particle system ---
+const MAX_PARTICLES = 200;
+
 function spawnParticles(x, y, count, color, speed, life) {
-  for (let i = 0; i < count; i++) {
+  const available = Math.max(0, MAX_PARTICLES - particles.length);
+  const spawnCount = Math.min(count, available);
+  for (let i = 0; i < spawnCount; i++) {
     const angle = Math.random() * Math.PI * 2;
     const vel = speed * (0.5 + Math.random() * 0.5);
     particles.push({
@@ -2257,6 +2354,24 @@ function endGame() {
   document.getElementById('final-good').textContent = ratings.good;
   document.getElementById('final-miss').textContent = ratings.miss;
 
+  // High score
+  const prevHs = getHighScore(selectedSong);
+  const isNewBest = !prevHs || score > prevHs.score;
+  if (isNewBest) {
+    saveHighScore(selectedSong, { score, grade, maxCombo });
+    updateSongButtonsWithHighScores();
+  }
+  const bestEl = document.getElementById('best-score-display');
+  if (bestEl) {
+    if (isNewBest) {
+      bestEl.textContent = 'NEW BEST!';
+      bestEl.className = 'new-best';
+    } else {
+      bestEl.textContent = `Best: ${prevHs.score.toLocaleString()}  (${prevHs.grade})`;
+      bestEl.className = 'prev-best';
+    }
+  }
+
   switchScreen('results-screen');
 }
 
@@ -2294,18 +2409,66 @@ startBtn.addEventListener('click', () => {
     initMediaPipe().then(() => {
       // Wait a bit for pose detection to warm up
       setTimeout(startGame, 1000);
+    }).catch((err) => {
+      console.error('Failed to initialize MediaPipe:', err);
+      loadingText.textContent = 'Failed to start camera. Please reload and allow access.';
     });
   } else {
     startGame();
   }
 });
 
-retryBtn.addEventListener('click', startGame);
+retryBtn.addEventListener('click', () => {
+  startGame().catch((err) => console.error('Failed to start game:', err));
+});
 
 menuBtn.addEventListener('click', () => {
-  switchScreen('start-screen');
   gameState = 'menu';
+
+  // Cancel any pending animation frame
+  if (animFrameId) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
+
+  // Clear countdown timer if mid-countdown
+  if (countdownIntervalId) {
+    clearInterval(countdownIntervalId);
+    countdownIntervalId = null;
+    countdownEl.classList.add('hidden');
+  }
+
+  // Clear overlay timeouts
+  if (ratingTimeoutId)   { clearTimeout(ratingTimeoutId);   ratingTimeoutId   = null; }
+  if (timingHintTimeoutId) { clearTimeout(timingHintTimeoutId); timingHintTimeoutId = null; }
+  if (milestoneTimeoutId)  { clearTimeout(milestoneTimeoutId);  milestoneTimeoutId  = null; }
+
+  // Reset overlay elements
+  ratingPopup.className = '';
+  const timingEl = document.getElementById('timing-hint');
+  if (timingEl) timingEl.className = '';
+  const milestoneEl = document.getElementById('combo-milestone');
+  if (milestoneEl) milestoneEl.className = '';
+
+  // Stop audio
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+  songAudioBuffer = null;
+
+  // Clean up match meter
+  const meter = document.querySelector('.match-meter');
+  if (meter) meter.remove();
+  const meterLabel = document.querySelector('.match-meter-label');
+  if (meterLabel) meterLabel.remove();
+
+  updateSongButtonsWithHighScores();
+  switchScreen('start-screen');
 });
+
+// Populate high score badges on first load
+updateSongButtonsWithHighScores();
 
 // Handle resize
 window.addEventListener('resize', () => {

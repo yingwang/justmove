@@ -440,6 +440,84 @@ body {
 #rating-popup.good { color: #00c8ff; text-shadow: 0 0 30px #00c8ff, 0 0 60px #0080ff; }
 #rating-popup.miss { color: #ff3366; text-shadow: 0 0 30px #ff3366, 0 0 60px #cc1144; }
 
+/* Timing Hint (EARLY / LATE) */
+#timing-hint {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.08s;
+  height: 1.2em;
+}
+
+#timing-hint.show { opacity: 1; }
+#timing-hint.early { color: #00c8ff; text-shadow: 0 0 10px rgba(0, 200, 255, 0.6); }
+#timing-hint.late  { color: #ff6b00; text-shadow: 0 0 10px rgba(255, 107, 0, 0.6); }
+
+/* Combo Milestone Banner */
+#combo-milestone {
+  position: absolute;
+  top: 32%;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  font-size: 4rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffd700;
+  text-shadow: 0 0 40px #ffd700, 0 0 80px #ffa500, 0 0 120px rgba(255, 200, 0, 0.4);
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+#combo-milestone.show {
+  animation: milestonePop 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes milestonePop {
+  0%   { transform: translateX(-50%) scale(0.2); opacity: 0; }
+  18%  { transform: translateX(-50%) scale(1.2); opacity: 1; }
+  35%  { transform: translateX(-50%) scale(0.95); opacity: 1; }
+  55%  { transform: translateX(-50%) scale(1);   opacity: 1; }
+  80%  { transform: translateX(-50%) scale(1);   opacity: 1; }
+  100% { transform: translateX(-50%) scale(1.05); opacity: 0; }
+}
+
+/* High Score on Results Screen */
+#best-score-display {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin: 0.4rem 0 1rem;
+  min-height: 1.5em;
+}
+
+#best-score-display.new-best {
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+  animation: newBestPulse 0.4s ease-in-out 4;
+}
+
+#best-score-display.prev-best { color: #666; }
+
+@keyframes newBestPulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.06); }
+}
+
+/* Song button high score badge */
+.song-hs {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #ffd700;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+}
+
 /* Song Progress */
 #song-progress {
   width: 300px;
