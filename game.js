@@ -422,6 +422,18 @@ function dist2d(a, b) {
 function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.clearRect(0, 0, w, h);
 
+  // Aspect-ratio correction: compress horizontally on wide canvases
+  // so body proportions match the reference instructor canvas (200×250).
+  const refAR = 200 / 250;
+  const curAR = w / h;
+  const xBodyScale = curAR > refAR ? refAR / curAR : 1;
+  const sizeScale = (colorType === 'player' || colorType === 'ghost') ? 0.88 : 1;
+  const totalXS = xBodyScale * sizeScale;
+  const totalYS = sizeScale;
+  ctx.save();
+  ctx.translate(w * (1 - totalXS) / 2, h * (1 - totalYS) * 0.6);
+  ctx.scale(totalXS, totalYS);
+
   // Fixed proportion calculations based on canvas size
   const s = Math.min(w / 600, h / 720);
   let bodyTilt = 0;
@@ -438,6 +450,11 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   const lShoulderX = cx - 0.12;
   const rShoulderX = cx + 0.12;
   const legSpread = opts.squat ? 0.14 : 0.08;
+
+  // Head position (computed early for neck drawing)
+  const headX = cx * w;
+  const headCY = headY * h;
+  const headR = Math.round(52 * s);
 
   // Avatar colors per type
   const targetColors = {
@@ -528,6 +545,10 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.fillRect(lFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s);
   ctx.fillRect(rFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s);
 
+  // --- Neck (connects head to shoulders) ---
+  const neckW = Math.round(18 * s);
+  drawLimb(headX, headCY + headR * 0.85, headX, shoulderY * h, neckW, colors.skin);
+
   // --- 3. Torso (red shirt + black vest) ---
   const pad = Math.round(25 * s);
   ctx.fillStyle = colors.shirt;
@@ -602,9 +623,6 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   }
 
   // --- 5. Head (hat, sunglasses, beard) ---
-  const headX = cx * w;
-  const headCY = headY * h;
-  const headR = Math.round(52 * s);
 
   // Face base (white skin)
   ctx.fillStyle = colors.skin; ctx.strokeStyle = colors.outline; ctx.lineWidth = Math.round(5 * s);
@@ -647,6 +665,8 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.lineTo(headX - headR, headCY - headR * 0.4);
   ctx.closePath();
   ctx.fill(); ctx.stroke();
+
+  ctx.restore();
 }
 
 // ===== Convert dynamic landmarks to fixed-proportion avatar options =====
