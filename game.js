@@ -653,6 +653,10 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 function landmarksToAvatarOpts(landmarks) {
   if (!landmarks) return {};
 
+  // Mirror x-coordinates so the avatar matches the CSS-mirrored webcam feed
+  // without needing a CSS scaleX(-1) on the pose canvas itself.
+  const ml = landmarks.map(lm => ({ ...lm, x: 1 - lm.x }));
+
   // Fixed model base points (matching drawStickFigure internal proportions)
   const cx = 0.5;
   const shoulderY = 0.32;
@@ -663,12 +667,12 @@ function landmarksToAvatarOpts(landmarks) {
   const upperArmLen = 0.15;
   const lowerArmLen = 0.12;
 
-  // Get real keypoints
-  const lShoulder = landmarks[11], rShoulder = landmarks[12];
-  const lElbow = landmarks[13], rElbow = landmarks[14];
-  const lWrist = landmarks[15], rWrist = landmarks[16];
-  const lHip = landmarks[23], rHip = landmarks[24];
-  const lKnee = landmarks[25], rKnee = landmarks[26];
+  // Get mirrored keypoints
+  const lShoulder = ml[11], rShoulder = ml[12];
+  const lElbow = ml[13], rElbow = ml[14];
+  const lWrist = ml[15], rWrist = ml[16];
+  const lHip = ml[23], rHip = ml[24];
+  const lKnee = ml[25], rKnee = ml[26];
 
   const opts = {};
 
@@ -705,13 +709,11 @@ function landmarksToAvatarOpts(landmarks) {
     return [elbowFixed, wristFixed];
   }
 
-  // Swap left/right: MediaPipe left landmarks control the avatar's right arm
-  // (drawn on the right side of the canvas), which after CSS scaleX(-1) appears
-  // on the left side of the screen — matching the user's left hand in mirror view.
-  opts.rArm = calcArm(lShoulder, lElbow, lWrist, rShoulderFixed);
-  opts.lArm = calcArm(rShoulder, rElbow, rWrist, lShoulderFixed);
+  // Direct mapping: mirrored left landmarks drive the avatar's left arm, etc.
+  opts.lArm = calcArm(lShoulder, lElbow, lWrist, lShoulderFixed);
+  opts.rArm = calcArm(rShoulder, rElbow, rWrist, rShoulderFixed);
 
-  // Lean detection (label is swapped so CSS scaleX(-1) mirror shows correct side)
+  // Lean detection (mirrored coordinates make labels directly correct)
   if (lShoulder && rShoulder && lHip && rHip) {
      const shoulderCenter = (lShoulder.x + rShoulder.x) / 2;
      const hipCenter = (lHip.x + rHip.x) / 2;
