@@ -1487,15 +1487,15 @@ function computeAvatarTransform(landmarks, w, h) {
   const targetTy = h / 2 - bodyCY * targetScale;
 
   if (!avatarTransform.initialized) {
-    // First detection: snap to target and lock the scale for fixed-size avatar
+    // First detection: snap to target immediately
     avatarTransform.scale = targetScale;
     avatarTransform.tx = targetTx;
     avatarTransform.ty = targetTy;
     avatarTransform.initialized = true;
   } else {
-    // Scale stays locked at the value set on first detection (fixed-size avatar –
-    // size does not change as the player moves toward or away from the camera).
-    // Only smoothly update position so the avatar follows the player's center.
+    // Smoothly update scale, horizontal and vertical position so the avatar always
+    // occupies a fixed fraction of the screen regardless of player distance.
+    avatarTransform.scale += (targetScale - avatarTransform.scale) * AVATAR_LERP_ALPHA;
     avatarTransform.tx += (targetTx - avatarTransform.tx) * AVATAR_LERP_ALPHA;
     avatarTransform.ty += (targetTy - avatarTransform.ty) * AVATAR_LERP_ALPHA;
   }
