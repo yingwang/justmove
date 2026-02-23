@@ -77,6 +77,9 @@ let milestoneTimeoutId = null;
 let beatPulse = 0;
 let currentSongBpm = 120;
 
+// Avatar normalization transform (smoothed, so avatar is always a fixed screen size)
+let avatarTransform = { scale: 1, tx: 0, ty: 0, initialized: false };
+
 // Neon color palette based on match quality
 const NEON_COLORS = {
   idle: { r: 0, g: 200, b: 255 },     // cyan
@@ -1350,14 +1353,24 @@ function onPoseResults(results) {
 
   if (results.poseLandmarks) {
     currentPoseLandmarks = results.poseLandmarks;
-    drawNeonBody(poseCtx, results.poseLandmarks, w, h);
-  }
 
-  if (results.leftHandLandmarks) {
-    drawNeonHand(poseCtx, results.leftHandLandmarks, w, h);
-  }
-  if (results.rightHandLandmarks) {
-    drawNeonHand(poseCtx, results.rightHandLandmarks, w, h);
+    // Apply a normalizing transform so the avatar is always a fixed screen size,
+    // regardless of how close or far the player stands from the camera.
+    const { scale, tx, ty } = computeAvatarTransform(results.poseLandmarks, w, h);
+    poseCtx.save();
+    poseCtx.translate(tx, ty);
+    poseCtx.scale(scale, scale);
+
+    drawNeonBody(poseCtx, results.poseLandmarks, w, h);
+
+    if (results.leftHandLandmarks) {
+      drawNeonHand(poseCtx, results.leftHandLandmarks, w, h);
+    }
+    if (results.rightHandLandmarks) {
+      drawNeonHand(poseCtx, results.rightHandLandmarks, w, h);
+    }
+
+    poseCtx.restore();
   }
 }
 
@@ -1403,6 +1416,74 @@ function getNeonColor() {
   if (poseMatchScore >= 0.5) return JUST_DANCE_COLORS.great;
   if (gameState === 'playing' && poseMatchScore < 0.2 && activePose) return JUST_DANCE_COLORS.miss;
   return JUST_DANCE_COLORS.player;
+}
+
+// Compute a canvas transform that keeps the avatar a fixed fraction of the screen,
+// regardless of how close or far the player is from the camera.
+// Uses smooth interpolation to prevent jarring frame-to-frame jumps.
+
+// Fraction of screen height the avatar body should always occupy
+const AVATAR_TARGET_HEIGHT_FRACTION = 0.72;
+// Maximum fraction of screen width the avatar body may occupy (caps wide poses)
+const AVATAR_TARGET_WIDTH_FRACTION = 0.50;
+// Extra space added above the nose landmark to include the full top of the head
+const AVATAR_HEAD_PADDING_FACTOR = 0.15;
+// Minimum/maximum allowed scale to prevent extreme values on degenerate input
+const AVATAR_MIN_SCALE = 0.3;
+const AVATAR_MAX_SCALE = 4.0;
+// Lerp alpha per frame: higher = more responsive but jitterier; lower = smoother but laggy
+const AVATAR_LERP_ALPHA = 0.12;
+// Minimum landmark visibility to be included in the bounding-box calculation
+const AVATAR_MIN_VISIBILITY = 0.4;
+
+function computeAvatarTransform(landmarks, w, h) {
+  // Key body landmarks in the MediaPipe Pose 33-point model:
+  // 0=nose, 11/12=shoulders, 23/24=hips, 27/28=ankles
+  const keyIndices = [0, 11, 12, 23, 24, 27, 28];
+  const visible = keyIndices.filter(i => landmarks[i] && landmarks[i].visibility > AVATAR_MIN_VISIBILITY);
+
+  if (visible.length < 3) {
+    // Not enough landmarks – return current smoothed transform unchanged
+    return avatarTransform;
+  }
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const i of visible) {
+    const lm = landmarks[i];
+    minX = Math.min(minX, lm.x);
+    maxX = Math.max(maxX, lm.x);
+    minY = Math.min(minY, lm.y);
+    maxY = Math.max(maxY, lm.y);
+  }
+
+  // Add padding above the nose to include the top of the head
+  const bodySpanY = maxY - minY;
+  minY = Math.max(0, minY - bodySpanY * AVATAR_HEAD_PADDING_FACTOR);
+
+  const bodyH = (maxY - minY) * h;
+  const bodyW = (maxX - minX) * w;
+  const bodyCX = (minX + maxX) / 2 * w;
+  const bodyCY = (minY + maxY) / 2 * h;
+
+  if (bodyH < 20) return avatarTransform;
+
+  // Scale so the body fills the target fraction of the screen
+  let targetScale = (h * AVATAR_TARGET_HEIGHT_FRACTION) / bodyH;
+  if (bodyW > 0) targetScale = Math.min(targetScale, (w * AVATAR_TARGET_WIDTH_FRACTION) / bodyW);
+  targetScale = Math.max(AVATAR_MIN_SCALE, Math.min(AVATAR_MAX_SCALE, targetScale));
+
+  // Target center: horizontally and vertically centered on screen
+  const targetTx = w / 2 - bodyCX * targetScale;
+  const targetTy = h / 2 - bodyCY * targetScale;
+
+  // Smooth interpolation – snap on first frame, lerp on subsequent frames
+  const alpha = avatarTransform.initialized ? AVATAR_LERP_ALPHA : 1.0;
+  avatarTransform.scale += (targetScale - avatarTransform.scale) * alpha;
+  avatarTransform.tx += (targetTx - avatarTransform.tx) * alpha;
+  avatarTransform.ty += (targetTy - avatarTransform.ty) * alpha;
+  avatarTransform.initialized = true;
+
+  return avatarTransform;
 }
 
 function drawNeonLimb(ctx, x1, y1, x2, y2, width, color, glowIntensity) {
@@ -1796,6 +1877,7 @@ async function startGame() {
   poseMatchScore = 0;
   songAudioBuffer = null;
   audioNodes = {};
+  avatarTransform = { scale: 1, tx: 0, ty: 0, initialized: false };
 
   // Setup canvases
   gameCanvas.width = window.innerWidth;
