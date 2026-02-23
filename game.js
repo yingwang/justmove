@@ -85,7 +85,7 @@ const NEON_COLORS = {
   idle: { r: 0, g: 200, b: 255 },     // cyan
   good: { r: 0, g: 255, b: 136 },      // green
   perfect: { r: 255, g: 215, b: 0 },   // gold
-  miss: { r: 255, g: 51, b: 102 },     // pink
+  miss: { r: 255, g: 153, b: 51 },     // amber
 };
 
 // Just Dance style colors
@@ -93,10 +93,10 @@ const JUST_DANCE_COLORS = {
   perfect: { r: 255, g: 215, b: 0 },   // gold
   great: { r: 0, g: 255, b: 136 },    // green
   good: { r: 0, g: 200, b: 255 },     // cyan
-  miss: { r: 255, g: 51, b: 102 },    // pink
+  miss: { r: 255, g: 153, b: 51 },    // amber
   background: { r: 10, g: 10, b: 26 }, // dark blue
   player: { r: 0, g: 200, b: 255 },   // player outline
-  target: { r: 255, g: 105, b: 180 }, // target outline
+  target: { r: 0, g: 230, b: 200 },   // target outline
 };
 
 // ===== Pose Definitions =====
@@ -2468,7 +2468,7 @@ function endGame() {
   else if (percentage >= 0.85) { grade = 'A'; gradeColor = '#00ff88'; }
   else if (percentage >= 0.70) { grade = 'B'; gradeColor = '#00c8ff'; }
   else if (percentage >= 0.50) { grade = 'C'; gradeColor = '#ff6b00'; }
-  else { grade = 'D'; gradeColor = '#ff3366'; }
+  else { grade = 'D'; gradeColor = '#ff9933'; }
 
   // Populate results
   document.getElementById('final-grade').textContent = grade;
