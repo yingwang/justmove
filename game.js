@@ -427,11 +427,15 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   const refAR = 200 / 250;
   const curAR = w / h;
   const xBodyScale = curAR > refAR ? refAR / curAR : 1;
-  const sizeScale = (colorType === 'player' || colorType === 'ghost') ? 0.88 : 1;
+  // Scale player/ghost avatars to 88% to provide ~14% top margin clearing the HUD
+  const PLAYER_AVATAR_SCALE = 0.88;
+  // Bias extra vertical space 60% above / 40% below to shift avatar below the HUD
+  const PLAYER_VERTICAL_BIAS = 0.6;
+  const sizeScale = (colorType === 'player' || colorType === 'ghost') ? PLAYER_AVATAR_SCALE : 1;
   const totalXS = xBodyScale * sizeScale;
   const totalYS = sizeScale;
   ctx.save();
-  ctx.translate(w * (1 - totalXS) / 2, h * (1 - totalYS) * 0.6);
+  ctx.translate(w * (1 - totalXS) / 2, h * (1 - totalYS) * PLAYER_VERTICAL_BIAS);
   ctx.scale(totalXS, totalYS);
 
   // Fixed proportion calculations based on canvas size
@@ -547,7 +551,9 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 
   // --- Neck (connects head to shoulders) ---
   const neckW = Math.round(18 * s);
-  drawLimb(headX, headCY + headR * 0.85, headX, shoulderY * h, neckW, colors.skin);
+  // Attach neck slightly above the head's bottom edge (inside the head oval)
+  const NECK_ATTACH_Y = 0.85;
+  drawLimb(headX, headCY + headR * NECK_ATTACH_Y, headX, shoulderY * h, neckW, colors.skin);
 
   // --- 3. Torso (red shirt + black vest) ---
   const pad = Math.round(25 * s);
