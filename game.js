@@ -183,8 +183,8 @@ const POSES = {
     },
     draw(ctx, w, h) {
       drawStickFigure(ctx, w, h, {
-        lArm: [{ x: 0.35, y: 0.25 }, { x: 0.3, y: 0.15 }],
-        rArm: [{ x: 0.65, y: 0.5 }, { x: 0.65, y: 0.6 }],
+        lArm: [{ x: 0.35, y: 0.5 }, { x: 0.35, y: 0.6 }],
+        rArm: [{ x: 0.65, y: 0.25 }, { x: 0.7, y: 0.15 }],
       }, 'target');
     },
   },
@@ -208,8 +208,8 @@ const POSES = {
     },
     draw(ctx, w, h) {
       drawStickFigure(ctx, w, h, {
-        lArm: [{ x: 0.35, y: 0.5 }, { x: 0.35, y: 0.6 }],
-        rArm: [{ x: 0.65, y: 0.25 }, { x: 0.7, y: 0.15 }],
+        lArm: [{ x: 0.35, y: 0.25 }, { x: 0.3, y: 0.15 }],
+        rArm: [{ x: 0.65, y: 0.5 }, { x: 0.65, y: 0.6 }],
       }, 'target');
     },
   },
@@ -292,9 +292,9 @@ const POSES = {
     },
     draw(ctx, w, h) {
       drawStickFigure(ctx, w, h, {
-        lArm: [{ x: 0.3, y: 0.35 }, { x: 0.2, y: 0.3 }],
-        rArm: [{ x: 0.6, y: 0.45 }, { x: 0.55, y: 0.55 }],
-        leanLeft: true,
+        lArm: [{ x: 0.4, y: 0.45 }, { x: 0.45, y: 0.55 }],
+        rArm: [{ x: 0.7, y: 0.35 }, { x: 0.8, y: 0.3 }],
+        leanRight: true,
       }, 'target');
     },
   },
@@ -319,9 +319,9 @@ const POSES = {
     },
     draw(ctx, w, h) {
       drawStickFigure(ctx, w, h, {
-        lArm: [{ x: 0.4, y: 0.45 }, { x: 0.45, y: 0.55 }],
-        rArm: [{ x: 0.7, y: 0.35 }, { x: 0.8, y: 0.3 }],
-        leanRight: true,
+        lArm: [{ x: 0.3, y: 0.35 }, { x: 0.2, y: 0.3 }],
+        rArm: [{ x: 0.6, y: 0.45 }, { x: 0.55, y: 0.55 }],
+        leanLeft: true,
       }, 'target');
     },
   },
@@ -349,8 +349,8 @@ const POSES = {
     },
     draw(ctx, w, h) {
       drawStickFigure(ctx, w, h, {
-        lArm: [{ x: 0.25, y: 0.35 }, { x: 0.15, y: 0.5 }],
-        rArm: [{ x: 0.55, y: 0.3 }, { x: 0.45, y: 0.2 }],
+        lArm: [{ x: 0.45, y: 0.3 }, { x: 0.55, y: 0.2 }],
+        rArm: [{ x: 0.75, y: 0.35 }, { x: 0.85, y: 0.5 }],
       }, 'target');
     },
   },
@@ -374,8 +374,8 @@ const POSES = {
     },
     draw(ctx, w, h) {
       drawStickFigure(ctx, w, h, {
-        lArm: [{ x: 0.45, y: 0.3 }, { x: 0.55, y: 0.2 }],
-        rArm: [{ x: 0.75, y: 0.35 }, { x: 0.85, y: 0.5 }],
+        lArm: [{ x: 0.25, y: 0.35 }, { x: 0.15, y: 0.5 }],
+        rArm: [{ x: 0.55, y: 0.3 }, { x: 0.45, y: 0.2 }],
       }, 'target');
     },
   },
@@ -681,12 +681,11 @@ function landmarksToAvatarOpts(landmarks) {
   }
 
   // Compute arm angle and generate proportional coordinates
-  // Negate dx to mirror horizontally (pose canvas uses CSS scaleX(-1))
   function calcArm(shoulderReal, elbowReal, wristReal, shoulderFixed) {
     if (!shoulderReal || !elbowReal || !wristReal) return null;
 
-    // Upper arm vector and angle (negate dx for CSS mirror correction)
-    const dx1 = -(elbowReal.x - shoulderReal.x);
+    // Upper arm vector and angle
+    const dx1 = elbowReal.x - shoulderReal.x;
     const dy1 = elbowReal.y - shoulderReal.y;
     const angle1 = Math.atan2(dy1, dx1);
     const elbowFixed = {
@@ -694,8 +693,8 @@ function landmarksToAvatarOpts(landmarks) {
       y: shoulderFixed.y + Math.sin(angle1) * upperArmLen
     };
 
-    // Forearm vector and angle (negate dx for CSS mirror correction)
-    const dx2 = -(wristReal.x - elbowReal.x);
+    // Forearm vector and angle
+    const dx2 = wristReal.x - elbowReal.x;
     const dy2 = wristReal.y - elbowReal.y;
     const angle2 = Math.atan2(dy2, dx2);
     const wristFixed = {
@@ -706,10 +705,13 @@ function landmarksToAvatarOpts(landmarks) {
     return [elbowFixed, wristFixed];
   }
 
-  opts.lArm = calcArm(lShoulder, lElbow, lWrist, lShoulderFixed);
-  opts.rArm = calcArm(rShoulder, rElbow, rWrist, rShoulderFixed);
+  // Swap left/right: MediaPipe left landmarks control the avatar's right arm
+  // (drawn on the right side of the canvas), which after CSS scaleX(-1) appears
+  // on the left side of the screen — matching the user's left hand in mirror view.
+  opts.rArm = calcArm(lShoulder, lElbow, lWrist, rShoulderFixed);
+  opts.lArm = calcArm(rShoulder, rElbow, rWrist, lShoulderFixed);
 
-  // Lean detection (negate for CSS mirror correction)
+  // Lean detection (label is swapped so CSS scaleX(-1) mirror shows correct side)
   if (lShoulder && rShoulder && lHip && rHip) {
      const shoulderCenter = (lShoulder.x + rShoulder.x) / 2;
      const hipCenter = (lHip.x + rHip.x) / 2;
