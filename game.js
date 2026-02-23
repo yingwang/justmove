@@ -71,6 +71,7 @@ let customAudioReady = false;
 let particles = [];
 let lastRatingTime = 0;
 let lastRating = '';
+let ratingTimeoutId = null;
 let beatPulse = 0;
 let currentSongBpm = 120;
 
@@ -1284,7 +1285,12 @@ async function initMediaPipe() {
     camera = new Camera(webcam, {
       onFrame: async () => {
         if (holistic) {
-          await holistic.send({ image: webcam });
+          try {
+            await holistic.send({ image: webcam });
+          } catch (err) {
+            // Single-frame errors are transient; log but keep the camera loop running
+            console.warn('Pose detection frame error:', err);
+          }
         }
       },
       width: 1280,
@@ -1757,6 +1763,7 @@ async function startGame() {
   currentBeatIndex = 0;
   poseMatchScore = 0;
   songAudioBuffer = null;
+  audioNodes = {};
 
   // Setup canvases
   gameCanvas.width = window.innerWidth;
@@ -2035,8 +2042,10 @@ function showRating(rating) {
   if (combo >= 20 && rating !== 'miss') {
     ratingPopup.textContent = rating.toUpperCase() + ' \u2605';
   }
-  setTimeout(() => {
+  if (ratingTimeoutId) clearTimeout(ratingTimeoutId);
+  ratingTimeoutId = setTimeout(() => {
     ratingPopup.className = '';
+    ratingTimeoutId = null;
   }, 700);
 }
 
@@ -2055,12 +2064,9 @@ function updatePoseMatch(elapsed) {
 }
 
 function renderBeatTimeline(elapsed) {
-  // Clear old markers
-  beatMarkersEl.innerHTML = '';
-
-  const timelineWidth = beatMarkersEl.parentElement.offsetWidth;
   const visibleWindow = 4; // seconds visible ahead
   const hitZonePos = 0.1; // 10% from left
+  const fragment = document.createDocumentFragment();
 
   for (let i = 0; i < beatMap.length; i++) {
     const beat = beatMap[i];
@@ -2082,8 +2088,12 @@ function renderBeatTimeline(elapsed) {
     icon.textContent = POSES[beat.pose].icon;
     marker.appendChild(icon);
 
-    beatMarkersEl.appendChild(marker);
+    fragment.appendChild(marker);
   }
+
+  // Single DOM write: clear + insert all markers in one operation
+  beatMarkersEl.textContent = '';
+  beatMarkersEl.appendChild(fragment);
 }
 
 function renderGameEffects(elapsed) {
@@ -2151,8 +2161,12 @@ function renderGameEffects(elapsed) {
 }
 
 // --- Particle system ---
+const MAX_PARTICLES = 200;
+
 function spawnParticles(x, y, count, color, speed, life) {
-  for (let i = 0; i < count; i++) {
+  const available = Math.max(0, MAX_PARTICLES - particles.length);
+  const spawnCount = Math.min(count, available);
+  for (let i = 0; i < spawnCount; i++) {
     const angle = Math.random() * Math.PI * 2;
     const vel = speed * (0.5 + Math.random() * 0.5);
     particles.push({
@@ -2315,7 +2329,9 @@ startBtn.addEventListener('click', () => {
   }
 });
 
-retryBtn.addEventListener('click', startGame);
+retryBtn.addEventListener('click', () => {
+  startGame().catch((err) => console.error('Failed to start game:', err));
+});
 
 menuBtn.addEventListener('click', () => {
   gameState = 'menu';
