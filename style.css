@@ -33,7 +33,34 @@ body {
 
 /* ===== Start Screen ===== */
 #start-screen {
-  background: linear-gradient(135deg, #0a0a2e 0%, #1a0a3e 50%, #0a1a3e 100%);
+  background: linear-gradient(135deg, #0a0a2e 0%, #0a1a2e 50%, #0a1a3e 100%);
+  overflow: hidden;
+}
+
+#start-screen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 200, 255, 0.015) 2px, rgba(0, 200, 255, 0.015) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 200, 255, 0.015) 2px, rgba(0, 200, 255, 0.015) 4px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+  animation: gridScroll 20s linear infinite;
+}
+
+@keyframes gridScroll {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(60px, 60px); }
+}
+
+#start-screen > * {
+  position: relative;
+  z-index: 1;
 }
 
 .title-container h1 {
@@ -41,7 +68,13 @@ body {
   font-weight: 900;
   letter-spacing: 0.1em;
   text-align: center;
-  text-shadow: 0 0 20px rgba(0, 200, 255, 0.5);
+  text-shadow: 0 0 20px rgba(0, 200, 255, 0.5), 0 0 60px rgba(0, 200, 255, 0.2);
+  animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+  0% { text-shadow: 0 0 20px rgba(0, 200, 255, 0.5), 0 0 60px rgba(0, 200, 255, 0.2); }
+  100% { text-shadow: 0 0 30px rgba(0, 200, 255, 0.8), 0 0 80px rgba(0, 200, 255, 0.4), 0 0 120px rgba(0, 200, 255, 0.15); }
 }
 
 .title-container .accent {
@@ -68,9 +101,20 @@ body {
 .camera-prompt {
   text-align: center;
   padding: 1rem 2rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 200, 255, 0.04);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 200, 255, 0.15);
+  position: relative;
+}
+
+.camera-prompt::before {
+  content: '💡';
+  position: absolute;
+  top: -0.7rem;
+  left: 1rem;
+  background: #0a0a2e;
+  padding: 0 0.4rem;
+  font-size: 0.85rem;
 }
 
 .camera-prompt p {
@@ -84,8 +128,9 @@ body {
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: #666;
+  color: #00c8ff;
   margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.3);
 }
 
 .song-list {
@@ -108,17 +153,37 @@ body {
   cursor: pointer;
   transition: all 0.3s;
   min-width: 140px;
+  position: relative;
+  overflow: hidden;
+}
+
+.song-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 200, 255, 0.06), transparent);
+  transition: left 0.5s;
+}
+
+.song-btn:hover::after {
+  left: 100%;
 }
 
 .song-btn:hover {
-  border-color: rgba(0, 200, 255, 0.3);
-  background: rgba(0, 200, 255, 0.05);
+  border-color: rgba(0, 200, 255, 0.4);
+  background: rgba(0, 200, 255, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 200, 255, 0.15);
 }
 
 .song-btn.selected {
   border-color: #00c8ff;
-  background: rgba(0, 200, 255, 0.1);
+  background: rgba(0, 200, 255, 0.12);
   color: #fff;
+  box-shadow: 0 0 20px rgba(0, 200, 255, 0.2), inset 0 0 20px rgba(0, 200, 255, 0.05);
 }
 
 .song-name {
@@ -149,7 +214,7 @@ body {
 
 .song-difficulty.easy { color: #00ff88; background: rgba(0, 255, 136, 0.1); }
 .song-difficulty.medium { color: #ffc800; background: rgba(255, 200, 0, 0.1); }
-.song-difficulty.hard { color: #ff3366; background: rgba(255, 51, 102, 0.1); }
+.song-difficulty.hard { color: #ff9933; background: rgba(255, 153, 51, 0.1); }
 
 /* Custom Audio Upload */
 .custom-audio-section {
@@ -167,8 +232,9 @@ body {
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: #666;
+  color: #00c8ff;
   margin-bottom: 0.4rem;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.3);
 }
 
 .custom-audio-hint {
@@ -272,11 +338,19 @@ body {
   cursor: pointer;
   transition: all 0.3s;
   text-transform: uppercase;
+  animation: btnPulse 2s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes btnPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(0, 200, 255, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(0, 200, 255, 0.5), 0 0 60px rgba(0, 128, 255, 0.2); }
 }
 
 .btn-primary:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 30px rgba(0, 200, 255, 0.4);
+  box-shadow: 0 0 30px rgba(0, 200, 255, 0.6), 0 0 60px rgba(0, 128, 255, 0.3);
+  animation: none;
 }
 
 .btn-secondary {
@@ -438,7 +512,7 @@ body {
 #rating-popup.perfect { color: #ffd700; text-shadow: 0 0 30px #ffd700, 0 0 60px #ffa500, 0 0 90px #ffd700; }
 #rating-popup.great { color: #00ff88; text-shadow: 0 0 30px #00ff88, 0 0 60px #00cc66; }
 #rating-popup.good { color: #00c8ff; text-shadow: 0 0 30px #00c8ff, 0 0 60px #0080ff; }
-#rating-popup.miss { color: #ff3366; text-shadow: 0 0 30px #ff3366, 0 0 60px #cc1144; }
+#rating-popup.miss { color: #ff9933; text-shadow: 0 0 30px #ff9933, 0 0 60px #cc7722; }
 
 /* Timing Hint (EARLY / LATE) */
 #timing-hint {
@@ -560,7 +634,7 @@ body {
   text-shadow: 0 0 60px rgba(0, 200, 255, 0.5);
 }
 
-#countdown-number[data-count="3"] { color: #ff3366; text-shadow: 0 0 60px rgba(255, 51, 102, 0.7), 0 0 120px rgba(255, 51, 102, 0.4); }
+#countdown-number[data-count="3"] { color: #ff9933; text-shadow: 0 0 60px rgba(255, 153, 51, 0.7), 0 0 120px rgba(255, 153, 51, 0.4); }
 #countdown-number[data-count="2"] { color: #ffc800; text-shadow: 0 0 60px rgba(255, 200, 0, 0.7), 0 0 120px rgba(255, 200, 0, 0.4); }
 #countdown-number[data-count="1"] { color: #00ff88; text-shadow: 0 0 60px rgba(0, 255, 136, 0.7), 0 0 120px rgba(0, 255, 136, 0.4); }
 #countdown-number[data-count="go"] { color: #00c8ff; text-shadow: 0 0 60px rgba(0, 200, 255, 0.9), 0 0 120px rgba(0, 200, 255, 0.6); }
@@ -711,9 +785,9 @@ body {
 }
 
 .beat-marker.miss {
-  border-color: #ff3366;
-  background: rgba(255, 51, 102, 0.2);
-  box-shadow: 0 0 8px rgba(255, 51, 102, 0.3);
+  border-color: #ff9933;
+  background: rgba(255, 153, 51, 0.2);
+  box-shadow: 0 0 8px rgba(255, 153, 51, 0.3);
   opacity: 0.25;
 }
 
@@ -725,7 +799,7 @@ body {
 
 /* ===== Results Screen ===== */
 #results-screen {
-  background: linear-gradient(135deg, #0a0a2e 0%, #1a0a3e 50%, #0a1a3e 100%);
+  background: linear-gradient(135deg, #0a0a2e 0%, #0a1a2e 50%, #0a1a3e 100%);
 }
 
 .results-container {
@@ -841,7 +915,7 @@ body {
   bottom: 0;
   left: 0;
   width: 100%;
-  background: linear-gradient(to top, #ff3366, #ffd700, #00ff88);
+  background: linear-gradient(to top, #ff9933, #ffd700, #00ff88);
   border-radius: 10px;
   transition: height 0.1s ease;
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
