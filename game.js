@@ -438,8 +438,8 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   const rShoulderX = cx + 0.12;
   const legSpread = opts.squat ? 0.14 : 0.08;
 
-  // Avatar colors (matching reference: sunglasses, beard, blue hat, black vest, red shirt, watch, yellow glove, black pants, blue boots)
-  const colors = {
+  // Avatar colors per type
+  const targetColors = {
     skin: '#FFFFFF',
     vest: '#0A1118',
     shirt: '#CC1111',
@@ -451,6 +451,19 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     hat: '#1E2A5E',
     outline: '#000000'
   };
+  const playerColors = {
+    skin: '#FFE0F0',
+    vest: '#2A1040',
+    shirt: '#D946A8',
+    pants: '#1A1A2E',
+    boots: '#7C3AED',
+    glove: '#F472B6',
+    watch: '#222222',
+    hair: '#1A1030',
+    hat: '#6D28D9',
+    outline: '#1A0030'
+  };
+  const colors = colorType === 'player' ? playerColors : targetColors;
 
   // Draw a limb with thick outline
   function drawLimb(x1, y1, x2, y2, width, color) {
@@ -578,7 +591,7 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   // --- 5. Head (hat, sunglasses, beard) ---
   const headX = cx * w;
   const headCY = headY * h;
-  const headR = Math.round(35 * s);
+  const headR = Math.round(52 * s);
 
   // Face base (white skin)
   ctx.fillStyle = colors.skin; ctx.strokeStyle = colors.outline; ctx.lineWidth = Math.round(5 * s);
@@ -655,11 +668,12 @@ function landmarksToAvatarOpts(landmarks) {
   }
 
   // Compute arm angle and generate proportional coordinates
+  // Negate dx to mirror horizontally (pose canvas uses CSS scaleX(-1))
   function calcArm(shoulderReal, elbowReal, wristReal, shoulderFixed) {
     if (!shoulderReal || !elbowReal || !wristReal) return null;
 
-    // Upper arm vector and angle
-    const dx1 = elbowReal.x - shoulderReal.x;
+    // Upper arm vector and angle (negate dx for CSS mirror correction)
+    const dx1 = -(elbowReal.x - shoulderReal.x);
     const dy1 = elbowReal.y - shoulderReal.y;
     const angle1 = Math.atan2(dy1, dx1);
     const elbowFixed = {
@@ -667,8 +681,8 @@ function landmarksToAvatarOpts(landmarks) {
       y: shoulderFixed.y + Math.sin(angle1) * upperArmLen
     };
 
-    // Forearm vector and angle
-    const dx2 = wristReal.x - elbowReal.x;
+    // Forearm vector and angle (negate dx for CSS mirror correction)
+    const dx2 = -(wristReal.x - elbowReal.x);
     const dy2 = wristReal.y - elbowReal.y;
     const angle2 = Math.atan2(dy2, dx2);
     const wristFixed = {
@@ -682,11 +696,11 @@ function landmarksToAvatarOpts(landmarks) {
   opts.lArm = calcArm(lShoulder, lElbow, lWrist, lShoulderFixed);
   opts.rArm = calcArm(rShoulder, rElbow, rWrist, rShoulderFixed);
 
-  // Lean detection
+  // Lean detection (negate for CSS mirror correction)
   if (lShoulder && rShoulder && lHip && rHip) {
      const shoulderCenter = (lShoulder.x + rShoulder.x) / 2;
      const hipCenter = (lHip.x + rHip.x) / 2;
-     const lean = shoulderCenter - hipCenter;
+     const lean = hipCenter - shoulderCenter;
      if (lean > 0.05) opts.leanLeft = true;
      if (lean < -0.05) opts.leanRight = true;
   }
