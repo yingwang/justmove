@@ -53,6 +53,7 @@ let beatMap = [];
 let currentBeatIndex = 0;
 let activePose = null;
 let poseMatchScore = 0;
+let lastPlayerOpts = null; // last valid avatar options (to prevent flickering)
 
 // Audio state
 let audioNodes = {};
@@ -463,7 +464,19 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     hat: '#6D28D9',
     outline: '#1A0030'
   };
-  const colors = colorType === 'player' ? playerColors : targetColors;
+  const ghostColors = {
+    skin: '#667788',
+    vest: '#334455',
+    shirt: '#556677',
+    pants: '#334455',
+    boots: '#445566',
+    glove: '#556677',
+    watch: '#334455',
+    hair: '#334455',
+    hat: '#445566',
+    outline: '#223344'
+  };
+  const colors = colorType === 'player' ? playerColors : colorType === 'ghost' ? ghostColors : targetColors;
 
   // Draw a limb with thick outline
   function drawLimb(x1, y1, x2, y2, width, color) {
@@ -1391,7 +1404,11 @@ function onPoseResults(results) {
     // Convert dynamic landmarks to fixed-proportion avatar options,
     // then render the Just Dance style avatar at a constant size.
     const playerOpts = landmarksToAvatarOpts(results.poseLandmarks);
+    lastPlayerOpts = playerOpts;
     drawStickFigure(poseCtx, w, h, playerOpts, 'player');
+  } else if (lastPlayerOpts) {
+    // Player not detected: show ghost avatar at last known pose
+    drawStickFigure(poseCtx, w, h, lastPlayerOpts, 'ghost');
   }
 }
 
