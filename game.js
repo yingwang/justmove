@@ -129,6 +129,8 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.35, y: 0.25 }, { x: 0.3, y: 0.15 }],
         rArm: [{ x: 0.65, y: 0.25 }, { x: 0.7, y: 0.15 }],
+        lLeg: [{ x: 0.44, y: 0.75 }, { x: 0.43, y: 0.93 }],
+        rLeg: [{ x: 0.55, y: 0.73 }, { x: 0.57, y: 0.91 }],
       }, 'target');
     },
   },
@@ -158,6 +160,8 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.2, y: 0.4 }, { x: 0.1, y: 0.4 }],
         rArm: [{ x: 0.8, y: 0.4 }, { x: 0.9, y: 0.4 }],
+        lLeg: [{ x: 0.40, y: 0.76 }, { x: 0.38, y: 0.94 }],
+        rLeg: [{ x: 0.60, y: 0.76 }, { x: 0.62, y: 0.94 }],
       }, 'target');
     },
   },
@@ -185,6 +189,8 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.35, y: 0.5 }, { x: 0.35, y: 0.6 }],
         rArm: [{ x: 0.65, y: 0.25 }, { x: 0.7, y: 0.15 }],
+        lLeg: [{ x: 0.43, y: 0.76 }, { x: 0.42, y: 0.94 }],
+        rLeg: [{ x: 0.56, y: 0.74 }, { x: 0.58, y: 0.92 }],
       }, 'target');
     },
   },
@@ -210,6 +216,8 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.35, y: 0.25 }, { x: 0.3, y: 0.15 }],
         rArm: [{ x: 0.65, y: 0.5 }, { x: 0.65, y: 0.6 }],
+        lLeg: [{ x: 0.44, y: 0.74 }, { x: 0.42, y: 0.92 }],
+        rLeg: [{ x: 0.57, y: 0.76 }, { x: 0.58, y: 0.94 }],
       }, 'target');
     },
   },
@@ -238,6 +246,8 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.38, y: 0.45 }, { x: 0.4, y: 0.55 }],
         rArm: [{ x: 0.62, y: 0.45 }, { x: 0.6, y: 0.55 }],
+        lLeg: [{ x: 0.43, y: 0.76 }, { x: 0.42, y: 0.94 }],
+        rLeg: [{ x: 0.58, y: 0.73 }, { x: 0.62, y: 0.90 }],
       }, 'target');
     },
   },
@@ -294,6 +304,8 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.4, y: 0.45 }, { x: 0.45, y: 0.55 }],
         rArm: [{ x: 0.7, y: 0.35 }, { x: 0.8, y: 0.3 }],
+        lLeg: [{ x: 0.40, y: 0.74 }, { x: 0.38, y: 0.92 }],
+        rLeg: [{ x: 0.56, y: 0.77 }, { x: 0.55, y: 0.94 }],
         leanRight: true,
       }, 'target');
     },
@@ -321,6 +333,8 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.3, y: 0.35 }, { x: 0.2, y: 0.3 }],
         rArm: [{ x: 0.6, y: 0.45 }, { x: 0.55, y: 0.55 }],
+        lLeg: [{ x: 0.44, y: 0.77 }, { x: 0.45, y: 0.94 }],
+        rLeg: [{ x: 0.60, y: 0.74 }, { x: 0.62, y: 0.92 }],
         leanLeft: true,
       }, 'target');
     },
@@ -351,6 +365,8 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.45, y: 0.3 }, { x: 0.55, y: 0.2 }],
         rArm: [{ x: 0.75, y: 0.35 }, { x: 0.85, y: 0.5 }],
+        lLeg: [{ x: 0.42, y: 0.76 }, { x: 0.40, y: 0.94 }],
+        rLeg: [{ x: 0.58, y: 0.72 }, { x: 0.62, y: 0.88 }],
       }, 'target');
     },
   },
@@ -376,6 +392,8 @@ const POSES = {
       drawStickFigure(ctx, w, h, {
         lArm: [{ x: 0.25, y: 0.35 }, { x: 0.15, y: 0.5 }],
         rArm: [{ x: 0.55, y: 0.3 }, { x: 0.45, y: 0.2 }],
+        lLeg: [{ x: 0.42, y: 0.72 }, { x: 0.38, y: 0.88 }],
+        rLeg: [{ x: 0.58, y: 0.76 }, { x: 0.60, y: 0.94 }],
       }, 'target');
     },
   },
@@ -437,8 +455,12 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   // Fixed proportion calculations based on canvas size
   const s = Math.min(w / 600, h / 720);
   let bodyTilt = 0;
-  if (opts.leanLeft) bodyTilt = -0.04;
-  if (opts.leanRight) bodyTilt = 0.04;
+  if (typeof opts.bodyAngle === 'number') {
+    bodyTilt = Math.max(-0.08, Math.min(0.08, opts.bodyAngle * 0.4));
+  } else {
+    if (opts.leanLeft) bodyTilt = -0.04;
+    if (opts.leanRight) bodyTilt = 0.04;
+  }
 
   const cx = 0.5 + bodyTilt;
   const headY = opts.squat ? 0.25 : 0.18;
@@ -567,25 +589,52 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 
   // --- 2. Legs and boots ---
   const limbW = Math.round(32 * s);
-  const lKneeX = (cx - legSpread) * w, rKneeX = (cx + legSpread) * w;
-  const lFootX = lKneeX - Math.round(10 * s), rFootX = rKneeX + Math.round(10 * s);
+  const lHipX = (cx - 0.04) * w;
+  const rHipX = (cx + 0.04) * w;
+
+  let lKneeX, lKneeYp, lFootX, lFootYp;
+  let rKneeX, rKneeYp, rFootX, rFootYp;
+
+  if (opts.lLeg) {
+    lKneeX = opts.lLeg[0].x * w;
+    lKneeYp = opts.lLeg[0].y * h;
+    lFootX = opts.lLeg[1].x * w;
+    lFootYp = opts.lLeg[1].y * h;
+  } else {
+    lKneeX = (cx - legSpread) * w;
+    lKneeYp = kneeY * h;
+    lFootX = lKneeX - Math.round(10 * s);
+    lFootYp = footY * h;
+  }
+
+  if (opts.rLeg) {
+    rKneeX = opts.rLeg[0].x * w;
+    rKneeYp = opts.rLeg[0].y * h;
+    rFootX = opts.rLeg[1].x * w;
+    rFootYp = opts.rLeg[1].y * h;
+  } else {
+    rKneeX = (cx + legSpread) * w;
+    rKneeYp = kneeY * h;
+    rFootX = rKneeX + Math.round(10 * s);
+    rFootYp = footY * h;
+  }
 
   // Thighs and shins (black pants)
-  drawLimb(cx * w, hipY * h, lKneeX, kneeY * h, limbW + 6 * s, colors.pants, colors.pants);
-  drawLimb(cx * w, hipY * h, rKneeX, kneeY * h, limbW + 6 * s, colors.pants, colors.pants);
-  drawLimb(lKneeX, kneeY * h, lFootX, footY * h, limbW, colors.pants, colors.pants);
-  drawLimb(rKneeX, kneeY * h, rFootX, footY * h, limbW, colors.pants, colors.pants);
+  drawLimb(lHipX, hipY * h, lKneeX, lKneeYp, limbW + 6 * s, colors.pants, colors.pants);
+  drawLimb(rHipX, hipY * h, rKneeX, rKneeYp, limbW + 6 * s, colors.pants, colors.pants);
+  drawLimb(lKneeX, lKneeYp, lFootX, lFootYp, limbW, colors.pants, colors.pants);
+  drawLimb(rKneeX, rKneeYp, rFootX, rFootYp, limbW, colors.pants, colors.pants);
 
   // Blue boots
-  drawLimb(lFootX, footY * h - 20 * s, lFootX, footY * h, limbW + 4 * s, colors.boots, colors.bootsHL);
-  drawLimb(rFootX, footY * h - 20 * s, rFootX, footY * h, limbW + 4 * s, colors.boots, colors.bootsHL);
+  drawLimb(lFootX, lFootYp - 20 * s, lFootX, lFootYp, limbW + 4 * s, colors.boots, colors.bootsHL);
+  drawLimb(rFootX, rFootYp - 20 * s, rFootX, rFootYp, limbW + 4 * s, colors.boots, colors.bootsHL);
   // Soles (rounded)
   ctx.fillStyle = colors.outline;
   ctx.beginPath();
-  ctx.roundRect(lFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s, 4*s);
+  ctx.roundRect(lFootX - limbW/2 - 4*s, lFootYp - 2*s, limbW + 16*s, 12*s, 4*s);
   ctx.fill();
   ctx.beginPath();
-  ctx.roundRect(rFootX - limbW/2 - 4*s, footY * h - 2*s, limbW + 16*s, 12*s, 4*s);
+  ctx.roundRect(rFootX - limbW/2 - 4*s, rFootYp - 2*s, limbW + 16*s, 12*s, 4*s);
   ctx.fill();
 
   // --- Neck (connects head to shoulders) ---
@@ -762,12 +811,17 @@ function landmarksToAvatarOpts(landmarks) {
   const upperArmLen = 0.15;
   const lowerArmLen = 0.12;
 
+  // Fixed leg lengths
+  const upperLegLen = 0.18;
+  const lowerLegLen = 0.16;
+
   // Get mirrored keypoints
   const lShoulder = ml[11], rShoulder = ml[12];
   const lElbow = ml[13], rElbow = ml[14];
   const lWrist = ml[15], rWrist = ml[16];
   const lHip = ml[23], rHip = ml[24];
   const lKnee = ml[25], rKnee = ml[26];
+  const lAnkle = ml[27], rAnkle = ml[28];
 
   const opts = {};
 
@@ -808,13 +862,48 @@ function landmarksToAvatarOpts(landmarks) {
   opts.lArm = calcArm(lShoulder, lElbow, lWrist, lShoulderFixed);
   opts.rArm = calcArm(rShoulder, rElbow, rWrist, rShoulderFixed);
 
-  // Lean detection (mirrored coordinates make labels directly correct)
+  // Compute leg angle and generate proportional coordinates
+  const hipY = opts.squat ? 0.60 : 0.58;
+  const lHipFixed = { x: cx - 0.04, y: hipY };
+  const rHipFixed = { x: cx + 0.04, y: hipY };
+
+  function calcLeg(hipReal, kneeReal, ankleReal, hipFixed) {
+    if (!hipReal || !kneeReal || !ankleReal) return null;
+
+    const dx1 = kneeReal.x - hipReal.x;
+    const dy1 = kneeReal.y - hipReal.y;
+    const angle1 = Math.atan2(dy1, dx1);
+    const kneeFixed = {
+      x: hipFixed.x + Math.cos(angle1) * upperLegLen,
+      y: hipFixed.y + Math.sin(angle1) * upperLegLen
+    };
+
+    const dx2 = ankleReal.x - kneeReal.x;
+    const dy2 = ankleReal.y - kneeReal.y;
+    const angle2 = Math.atan2(dy2, dx2);
+    const ankleFixed = {
+      x: kneeFixed.x + Math.cos(angle2) * lowerLegLen,
+      y: kneeFixed.y + Math.sin(angle2) * lowerLegLen
+    };
+
+    return [kneeFixed, ankleFixed];
+  }
+
+  opts.lLeg = calcLeg(lHip, lKnee, lAnkle, lHipFixed);
+  opts.rLeg = calcLeg(rHip, rKnee, rAnkle, rHipFixed);
+
+  // Lean detection and continuous body angle
   if (lShoulder && rShoulder && lHip && rHip) {
      const shoulderCenter = (lShoulder.x + rShoulder.x) / 2;
      const hipCenter = (lHip.x + rHip.x) / 2;
      const lean = hipCenter - shoulderCenter;
      if (lean > 0.05) opts.leanLeft = true;
      if (lean < -0.05) opts.leanRight = true;
+
+     // Continuous body angle from spine orientation (radians from vertical)
+     const shoulderMidY = (lShoulder.y + rShoulder.y) / 2;
+     const hipMidY = (lHip.y + rHip.y) / 2;
+     opts.bodyAngle = Math.atan2(shoulderCenter - hipCenter, hipMidY - shoulderMidY);
   }
 
   return opts;
