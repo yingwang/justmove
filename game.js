@@ -448,20 +448,20 @@ function detectHeadGesture(landmarks) {
   const lShoulder = landmarks[11];
   const rShoulder = landmarks[12];
   if (!nose || !lShoulder || !rShoulder) return null;
-  if ((nose.visibility != null && nose.visibility < 0.5) ||
-      (lShoulder.visibility != null && lShoulder.visibility < 0.5) ||
-      (rShoulder.visibility != null && rShoulder.visibility < 0.5)) return null;
+  if ((nose.visibility !== null && nose.visibility !== undefined && nose.visibility < 0.5) ||
+      (lShoulder.visibility !== null && lShoulder.visibility !== undefined && lShoulder.visibility < 0.5) ||
+      (rShoulder.visibility !== null && rShoulder.visibility !== undefined && rShoulder.visibility < 0.5)) return null;
 
   const midX = (lShoulder.x + rShoulder.x) / 2;
   const midY = (lShoulder.y + rShoulder.y) / 2;
   const sw = Math.abs(lShoulder.x - rShoulder.x) || 0.1;
 
-  // Nose position relative to shoulder center, normalised by shoulder width
+  // Nose position relative to shoulder center, normalized by shoulder width
   const rx = (nose.x - midX) / sw;
   const ry = (nose.y - midY) / sw;
   const now = Date.now();
 
-  // Initialise or slowly update resting position
+  // Initialize or slowly update resting position
   if (!headGesture.restInitialized) {
     headGesture.restX = rx;
     headGesture.restY = ry;
@@ -1618,7 +1618,7 @@ async function initMediaPipe() {
 
     // Update gesture hint
     const gestureStatus = document.getElementById('gesture-status');
-    if (gestureStatus) gestureStatus.textContent = '🎯 Nod ↓  start  •  Shake ↔  select song';
+    if (gestureStatus) gestureStatus.textContent = '🎯 Nod ↓ start • Shake ↔ select song';
 
     camera = new Camera(webcam, {
       onFrame: async () => {
@@ -2211,13 +2211,13 @@ function switchScreen(screenId) {
     focusedResultBtn = 0;
     updateResultsFocus();
     const gs = document.getElementById('gesture-status');
-    if (gs) gs.textContent = '🎯 Nod ↓  confirm  •  Shake ↔  switch';
+    if (gs) gs.textContent = '🎯 Nod ↓ confirm • Shake ↔ switch';
   }
 
   // Update gesture hint when returning to start screen
   if (screenId === 'start-screen') {
     const gs = document.getElementById('gesture-status');
-    if (gs) gs.textContent = '🎯 Nod ↓  start  •  Shake ↔  select song';
+    if (gs) gs.textContent = '🎯 Nod ↓ start • Shake ↔ select song';
   }
 }
 
