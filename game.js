@@ -2098,6 +2098,13 @@ async function startGame() {
     gameState = 'playing';
     gameStartTime = performance.now();
 
+    // Show first target pose immediately so instructor avatar is visible from the start
+    if (beatMap.length > 0) {
+      activePose = beatMap[0].pose;
+      poseNameEl.textContent = POSES[activePose].name;
+      POSES[activePose].draw(targetCtx, targetPoseCanvas.width, targetPoseCanvas.height);
+    }
+
     // Start music
     playSynthSong(song.bpm, song.duration, song.style);
 
