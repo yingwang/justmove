@@ -125,7 +125,7 @@ body {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.25em;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 200, 255, 0.6);
   margin-bottom: 0.8rem;
 }
 
@@ -215,7 +215,7 @@ body {
 
 .song-difficulty.easy { color: #00ff88; }
 .song-difficulty.medium { color: #ffc800; }
-.song-difficulty.hard { color: #ff6b00; }
+.song-difficulty.hard { color: #ff9933; }
 
 /* Custom Audio Toggle */
 .custom-audio-toggle {
