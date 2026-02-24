@@ -901,9 +901,9 @@ function landmarksToAvatarOpts(landmarks) {
      if (lean < -0.05) opts.leanRight = true;
 
      // Continuous body angle from spine orientation (radians from vertical)
-     const shoulderMidY = (lShoulder.y + rShoulder.y) / 2;
-     const hipMidY = (lHip.y + rHip.y) / 2;
-     opts.bodyAngle = Math.atan2(shoulderCenter - hipCenter, hipMidY - shoulderMidY);
+     const shoulderCenterY = (lShoulder.y + rShoulder.y) / 2;
+     const hipCenterY = (lHip.y + rHip.y) / 2;
+     opts.bodyAngle = Math.atan2(shoulderCenter - hipCenter, hipCenterY - shoulderCenterY);
   }
 
   return opts;
