@@ -39,12 +39,17 @@ body {
 }
 
 #start-screen.active {
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 #start-screen > * {
   position: relative;
   z-index: 1;
+}
+
+#start-screen > .floating-particles {
+  position: absolute;
+  z-index: 0;
 }
 
 /* Floating Particles */
