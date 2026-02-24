@@ -2202,6 +2202,9 @@ function switchScreen(screenId) {
     preview.classList.toggle('hidden', screenId === 'game-screen');
   }
 
+  // Toggle webcam full-screen mode for gameplay
+  webcam.classList.toggle('in-game', screenId === 'game-screen');
+
   // Reset gesture state when switching screens
   headGesture.phase = 'idle';
   headGesture.restInitialized = false;
