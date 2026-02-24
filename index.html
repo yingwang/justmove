@@ -9,58 +9,59 @@
 <body>
   <!-- Start Screen -->
   <div id="start-screen" class="screen active">
+    <div class="floating-particles" aria-hidden="true">
+      <span class="particle">🎵</span>
+      <span class="particle">🎶</span>
+      <span class="particle">💃</span>
+      <span class="particle">🕺</span>
+      <span class="particle">✨</span>
+      <span class="particle">🎵</span>
+      <span class="particle">🎶</span>
+      <span class="particle">💃</span>
+    </div>
     <div class="title-container">
+      <div class="title-icon">🕺</div>
       <h1>JUST<span class="accent">MOVE</span></h1>
-      <p class="subtitle">A Motion-Tracking Rhythm Game</p>
-      <p class="version-code">v1.0.0</p>
     </div>
     <div class="start-content">
-      <div class="camera-prompt">
-        <p>This game uses your camera to track your movements.</p>
-        <p>Stand back so your full body is visible!</p>
-      </div>
       <div class="song-select">
-        <h2>Select a Song</h2>
+        <h2>Choose Your Track</h2>
         <div class="song-list">
           <button class="song-btn selected" data-song="pop-dance-beat">
+            <span class="song-icon">🎤</span>
             <span class="song-name">Let's Meet Michelle</span>
-            <span class="song-style">Pop</span>
-            <span class="song-bpm">120 BPM</span>
-            <span class="song-difficulty easy">Easy</span>
+            <span class="song-meta"><span class="song-bpm">120 BPM</span> · <span class="song-difficulty easy">Easy</span></span>
           </button>
           <button class="song-btn" data-song="tropical-house">
+            <span class="song-icon">🌴</span>
             <span class="song-name">Breeze Groove</span>
-            <span class="song-style">Chill</span>
-            <span class="song-bpm">110 BPM</span>
-            <span class="song-difficulty easy">Easy</span>
+            <span class="song-meta"><span class="song-bpm">110 BPM</span> · <span class="song-difficulty easy">Easy</span></span>
           </button>
           <button class="song-btn" data-song="afrobeats-rhythm">
+            <span class="song-icon">🎧</span>
             <span class="song-name">Hip-Hop Cypher</span>
-            <span class="song-style">Hip-Hop</span>
-            <span class="song-bpm">95 BPM</span>
-            <span class="song-difficulty medium">Medium</span>
+            <span class="song-meta"><span class="song-bpm">95 BPM</span> · <span class="song-difficulty medium">Medium</span></span>
           </button>
           <button class="song-btn" data-song="dnb-breakbeat">
+            <span class="song-icon">⚡</span>
             <span class="song-name">Drive Breakbeat</span>
-            <span class="song-style">Drum &amp; Bass</span>
-            <span class="song-bpm">160 BPM</span>
-            <span class="song-difficulty hard">Hard</span>
+            <span class="song-meta"><span class="song-bpm">160 BPM</span> · <span class="song-difficulty hard">Hard</span></span>
           </button>
           <button class="song-btn" data-song="high-energy-trap">
+            <span class="song-icon">🔥</span>
             <span class="song-name">High Energy Trap</span>
-            <span class="song-style">Trap</span>
-            <span class="song-bpm">150 BPM</span>
-            <span class="song-difficulty hard">Hard</span>
+            <span class="song-meta"><span class="song-bpm">150 BPM</span> · <span class="song-difficulty hard">Hard</span></span>
           </button>
         </div>
       </div>
-      <div class="custom-audio-section">
-        <h2>Or Use Your Own Music</h2>
-        <p class="custom-audio-hint">Upload any MP3/WAV file — beats will be auto-detected for perfect sync!</p>
+      <div class="custom-audio-toggle">
+        <button id="toggle-custom-audio" class="btn-toggle" type="button">🎵 Use Your Own Music</button>
+      </div>
+      <div class="custom-audio-section hidden" id="custom-audio-section">
         <div class="custom-audio-controls">
           <label class="btn-upload" id="upload-label">
             <input type="file" id="audio-upload" accept="audio/*" hidden>
-            <span>🎵 Choose Audio File</span>
+            <span>Choose Audio File</span>
           </label>
           <span id="audio-file-name" class="audio-file-name"></span>
         </div>
