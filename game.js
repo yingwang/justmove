@@ -1723,7 +1723,7 @@ function getNeonColor() {
 // Uses smooth interpolation to prevent jarring frame-to-frame jumps.
 
 // Fraction of screen height the avatar body should always occupy
-const AVATAR_TARGET_HEIGHT_FRACTION = 0.72;
+const AVATAR_TARGET_HEIGHT_FRACTION = 0.62;
 // Maximum fraction of screen width the avatar body may occupy (caps wide poses)
 const AVATAR_TARGET_WIDTH_FRACTION = 0.50;
 // Extra space added above the nose landmark to include the full top of the head
