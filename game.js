@@ -81,6 +81,28 @@ let currentSongBpm = 120;
 // Avatar normalization transform (smoothed, so avatar is always a fixed screen size)
 let avatarTransform = { scale: 1, tx: 0, ty: 0, initialized: false };
 
+// ===== Head Gesture Control =====
+// Detect nod (confirm) and shake (navigate) using nose position relative to shoulders
+let headGesture = {
+  restX: 0,             // resting nose-X relative to shoulder center
+  restY: 0,             // resting nose-Y relative to shoulder center
+  restInitialized: false,
+  phase: 'idle',        // 'idle' | 'nod-down' | 'shake-out'
+  phaseStartTime: 0,    // when current phase started (for timeout)
+  lastGestureTime: 0,
+};
+
+// UI focus state for head-gesture navigation
+let focusedSongIndex = 0;
+let focusedResultBtn = 0; // 0 = retry, 1 = menu
+
+const GESTURE_COOLDOWN = 800;    // ms between gesture triggers
+const NOD_THRESHOLD = 0.18;      // nose-Y displacement (in shoulder-widths) to start nod
+const SHAKE_THRESHOLD = 0.15;    // nose-X displacement to start shake
+const GESTURE_RETURN_RATIO = 0.4;// fraction of threshold to count as "returned"
+const GESTURE_REST_ALPHA = 0.03; // EMA alpha for resting position update
+const GESTURE_PHASE_TIMEOUT = 1500; // ms: reset phase if gesture not completed
+
 // Neon color palette based on match quality
 const NEON_COLORS = {
   idle: { r: 0, g: 200, b: 255 },     // cyan
@@ -416,6 +438,128 @@ function updateSongButtonsWithHighScores() {
 // ===== Helper Functions =====
 function dist2d(a, b) {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+}
+
+// ===== Head Gesture Detection =====
+function detectHeadGesture(landmarks) {
+  if (!landmarks) return null;
+
+  const nose = landmarks[0];
+  const lShoulder = landmarks[11];
+  const rShoulder = landmarks[12];
+  if (!nose || !lShoulder || !rShoulder) return null;
+  if ((nose.visibility !== null && nose.visibility !== undefined && nose.visibility < 0.5) ||
+      (lShoulder.visibility !== null && lShoulder.visibility !== undefined && lShoulder.visibility < 0.5) ||
+      (rShoulder.visibility !== null && rShoulder.visibility !== undefined && rShoulder.visibility < 0.5)) return null;
+
+  const midX = (lShoulder.x + rShoulder.x) / 2;
+  const midY = (lShoulder.y + rShoulder.y) / 2;
+  const sw = Math.abs(lShoulder.x - rShoulder.x) || 0.1;
+
+  // Nose position relative to shoulder center, normalized by shoulder width
+  const rx = (nose.x - midX) / sw;
+  const ry = (nose.y - midY) / sw;
+  const now = Date.now();
+
+  // Initialize or slowly update resting position
+  if (!headGesture.restInitialized) {
+    headGesture.restX = rx;
+    headGesture.restY = ry;
+    headGesture.restInitialized = true;
+    return null;
+  }
+
+  if (headGesture.phase === 'idle') {
+    headGesture.restX += (rx - headGesture.restX) * GESTURE_REST_ALPHA;
+    headGesture.restY += (ry - headGesture.restY) * GESTURE_REST_ALPHA;
+  }
+
+  const dx = rx - headGesture.restX;
+  const dy = ry - headGesture.restY;
+
+  // Cooldown
+  if (now - headGesture.lastGestureTime < GESTURE_COOLDOWN) return null;
+
+  // Timeout: reset if gesture phase lasts too long
+  if (headGesture.phase !== 'idle' && now - headGesture.phaseStartTime > GESTURE_PHASE_TIMEOUT) {
+    headGesture.phase = 'idle';
+    return null;
+  }
+
+  // State machine
+  if (headGesture.phase === 'idle') {
+    if (dy > NOD_THRESHOLD) {
+      headGesture.phase = 'nod-down';
+      headGesture.phaseStartTime = now;
+    } else if (Math.abs(dx) > SHAKE_THRESHOLD) {
+      headGesture.phase = 'shake-out';
+      headGesture.phaseStartTime = now;
+    }
+  } else if (headGesture.phase === 'nod-down') {
+    if (dy < NOD_THRESHOLD * GESTURE_RETURN_RATIO) {
+      headGesture.phase = 'idle';
+      headGesture.lastGestureTime = now;
+      return 'nod';
+    }
+  } else if (headGesture.phase === 'shake-out') {
+    if (Math.abs(dx) < SHAKE_THRESHOLD * GESTURE_RETURN_RATIO) {
+      headGesture.phase = 'idle';
+      headGesture.lastGestureTime = now;
+      return 'shake';
+    }
+  }
+
+  return null;
+}
+
+// Process a detected gesture based on the current screen
+function handleGesture(gesture) {
+  if (!gesture) return;
+
+  const gestureIndicator = document.getElementById('gesture-status');
+
+  if (gameState === 'menu') {
+    const songBtns = Array.from(document.querySelectorAll('.song-btn'));
+    if (gesture === 'shake') {
+      // Cycle to next song
+      focusedSongIndex = (focusedSongIndex + 1) % songBtns.length;
+      // Update selection
+      songBtns.forEach((b) => b.classList.remove('selected'));
+      songBtns[focusedSongIndex].classList.add('selected');
+      selectedSong = songBtns[focusedSongIndex].dataset.song;
+      if (gestureIndicator) gestureIndicator.textContent = '🔄 Song changed';
+    } else if (gesture === 'nod') {
+      if (gestureIndicator) gestureIndicator.textContent = '✅ Starting...';
+      // Trigger start game
+      if (!holistic) {
+        initMediaPipe().then(() => setTimeout(startGame, 1000)).catch((err) => {
+          console.error('Failed to initialize MediaPipe:', err);
+        });
+      } else {
+        startGame();
+      }
+    }
+  } else if (gameState === 'results') {
+    const resultBtns = [retryBtn, menuBtn];
+    if (gesture === 'shake') {
+      // Toggle between retry and menu
+      focusedResultBtn = (focusedResultBtn + 1) % resultBtns.length;
+      updateResultsFocus();
+      if (gestureIndicator) gestureIndicator.textContent = '🔄 Switched';
+    } else if (gesture === 'nod') {
+      if (gestureIndicator) gestureIndicator.textContent = '✅ Confirmed';
+      // Activate focused button
+      resultBtns[focusedResultBtn].click();
+    }
+  }
+}
+
+// Update visual focus indicator on results screen buttons
+function updateResultsFocus() {
+  const resultBtns = [retryBtn, menuBtn];
+  resultBtns.forEach((btn, i) => {
+    btn.classList.toggle('gesture-focused', i === focusedResultBtn);
+  });
 }
 
 // ===== Just Dance style avatar rendering =====
@@ -1463,6 +1607,19 @@ async function initMediaPipe() {
     webcam.srcObject = stream;
     await webcam.play();
 
+    // Feed the same stream to the floating camera preview
+    const previewVideo = document.getElementById('preview-webcam');
+    if (previewVideo) {
+      previewVideo.srcObject = stream;
+      previewVideo.play().catch(() => {});
+    }
+    const cameraPreview = document.getElementById('camera-preview');
+    if (cameraPreview) cameraPreview.classList.remove('hidden');
+
+    // Update gesture hint
+    const gestureStatus = document.getElementById('gesture-status');
+    if (gestureStatus) gestureStatus.textContent = '🎯 Nod ↓ start • Shake ↔ select song';
+
     camera = new Camera(webcam, {
       onFrame: async () => {
         if (holistic) {
@@ -1499,6 +1656,12 @@ function onPoseResults(results) {
 
   if (results.poseLandmarks) {
     currentPoseLandmarks = results.poseLandmarks;
+
+    // Head gesture detection (active on menu & results screens)
+    if (gameState === 'menu' || gameState === 'results') {
+      const gesture = detectHeadGesture(results.poseLandmarks);
+      if (gesture) handleGesture(gesture);
+    }
 
     // Convert dynamic landmarks to fixed-proportion avatar options,
     // then render the Just Dance style avatar at a constant size.
@@ -2032,6 +2195,30 @@ function drawNeonHand(ctx, landmarks, w, h) {
 function switchScreen(screenId) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
+
+  // Show camera preview on start/results screens; hide during gameplay
+  const preview = document.getElementById('camera-preview');
+  if (preview) {
+    preview.classList.toggle('hidden', screenId === 'game-screen');
+  }
+
+  // Reset gesture state when switching screens
+  headGesture.phase = 'idle';
+  headGesture.restInitialized = false;
+
+  // Update focus indicators when entering results screen
+  if (screenId === 'results-screen') {
+    focusedResultBtn = 0;
+    updateResultsFocus();
+    const gs = document.getElementById('gesture-status');
+    if (gs) gs.textContent = '🎯 Nod ↓ confirm • Shake ↔ switch';
+  }
+
+  // Update gesture hint when returning to start screen
+  if (screenId === 'start-screen') {
+    const gs = document.getElementById('gesture-status');
+    if (gs) gs.textContent = '🎯 Nod ↓ start • Shake ↔ select song';
+  }
 }
 
 async function startGame() {
@@ -2636,12 +2823,14 @@ function endGame() {
 }
 
 // ===== Event Listeners =====
-// Song selection
-document.querySelectorAll('.song-btn').forEach((btn) => {
+// Song selection (click still works as fallback)
+const allSongBtns = Array.from(document.querySelectorAll('.song-btn'));
+allSongBtns.forEach((btn, idx) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.song-btn').forEach((b) => b.classList.remove('selected'));
+    allSongBtns.forEach((b) => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedSong = btn.dataset.song;
+    focusedSongIndex = idx;
   });
 });
 
@@ -2745,4 +2934,9 @@ window.addEventListener('resize', () => {
     gameCanvas.width = window.innerWidth;
     gameCanvas.height = window.innerHeight;
   }
+});
+
+// ===== Auto-initialise MediaPipe on page load for head-gesture control =====
+initMediaPipe().catch((err) => {
+  console.warn('Auto-init MediaPipe failed (will retry on START):', err);
 });

@@ -75,7 +75,11 @@
           </select>
         </div>
       </div>
-      <button id="start-btn" class="btn-primary">▶ PLAY</button>
+      <button id="start-btn" class="btn-primary">START GAME</button>
+      <div class="gesture-hint" id="start-gesture-hint">
+        <span>↓ Nod to Start</span>
+        <span>↔ Shake to Select Song</span>
+      </div>
       <p class="pixabay-attribution">Music from <a href="https://pixabay.com/music/" target="_blank" rel="noopener">Pixabay</a></p>
     </div>
   </div>
@@ -167,10 +171,20 @@
         </div>
       </div>
       <div class="results-buttons">
-        <button id="retry-btn" class="btn-primary">PLAY AGAIN</button>
+        <button id="retry-btn" class="btn-primary gesture-focused">PLAY AGAIN</button>
         <button id="menu-btn" class="btn-secondary">MAIN MENU</button>
       </div>
+      <div class="gesture-hint" id="results-gesture-hint">
+        <span>↓ Nod to Confirm</span>
+        <span>↔ Shake to Switch</span>
+      </div>
     </div>
+  </div>
+
+  <!-- Camera preview for head-gesture control (visible on start/results screens) -->
+  <div id="camera-preview" class="camera-preview hidden">
+    <video id="preview-webcam" autoplay playsinline muted></video>
+    <div id="gesture-status" class="gesture-status">Loading camera…</div>
   </div>
 
   <!-- Loading Overlay -->
