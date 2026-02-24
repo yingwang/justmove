@@ -84,9 +84,12 @@
     </div>
   </div>
 
+  <!-- Webcam (outside game-screen so it is never inside display:none,
+       allowing MediaPipe to capture frames on every screen) -->
+  <video id="webcam" autoplay playsinline></video>
+
   <!-- Game Screen -->
   <div id="game-screen" class="screen">
-    <video id="webcam" autoplay playsinline></video>
     <canvas id="pose-canvas"></canvas>
     <canvas id="game-canvas"></canvas>
 
