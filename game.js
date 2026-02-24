@@ -431,7 +431,7 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   const totalXS = xBodyScale * sizeScale;
   const totalYS = sizeScale;
   ctx.save();
-  ctx.translate(w * (1 - totalXS) / 2, h * (1 - totalYS) * 0.6);
+  ctx.translate(w * (1 - totalXS) / 2, h * (1 - totalYS) * 0.35);
   ctx.scale(totalXS, totalYS);
 
   // Fixed proportion calculations based on canvas size
