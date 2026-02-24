@@ -675,19 +675,19 @@ body {
   right: 30px;
   width: 180px;
   height: 230px;
-  background: rgba(0, 0, 20, 0.7);
-  border: 2px solid rgba(0, 200, 255, 0.4);
+  background: rgba(0, 0, 20, 0.8);
+  border: 2px solid rgba(255, 80, 80, 0.5);
   border-radius: 16px;
   overflow: hidden;
   z-index: 10;
   backdrop-filter: blur(12px);
-  box-shadow: 0 0 20px rgba(0, 200, 255, 0.15), inset 0 0 30px rgba(0, 200, 255, 0.05);
+  box-shadow: 0 0 24px rgba(255, 80, 80, 0.2), inset 0 0 30px rgba(255, 80, 80, 0.06), 0 4px 20px rgba(0, 0, 0, 0.4);
   animation: targetPulse 2s ease-in-out infinite alternate;
 }
 
 @keyframes targetPulse {
-  from { border-color: rgba(0, 200, 255, 0.3); box-shadow: 0 0 15px rgba(0, 200, 255, 0.1); }
-  to { border-color: rgba(0, 200, 255, 0.6); box-shadow: 0 0 25px rgba(0, 200, 255, 0.25); }
+  from { border-color: rgba(255, 80, 80, 0.4); box-shadow: 0 0 18px rgba(255, 80, 80, 0.15), 0 4px 20px rgba(0, 0, 0, 0.4); }
+  to { border-color: rgba(255, 80, 80, 0.7); box-shadow: 0 0 30px rgba(255, 80, 80, 0.3), 0 4px 20px rgba(0, 0, 0, 0.4); }
 }
 
 #target-pose-canvas {

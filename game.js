@@ -458,47 +458,71 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 
   // Avatar colors per type
   const targetColors = {
-    skin: '#FFFFFF',
-    vest: '#0A1118',
-    shirt: '#CC1111',
-    pants: '#1A1A24',
-    boots: '#2233AA',
-    glove: '#FFDD00',
-    watch: '#111111',
-    hair: '#111111',
-    hat: '#1E2A5E',
-    outline: '#000000'
+    skin: '#FFF5E0',
+    vest: '#0D1B2A',
+    shirt: '#FF2244',
+    shirtHL: '#FF6677',
+    pants: '#141428',
+    boots: '#3355DD',
+    bootsHL: '#6688FF',
+    glove: '#FFE033',
+    gloveHL: '#FFF176',
+    watch: '#181818',
+    hair: '#0D0D0D',
+    hat: '#2240AA',
+    hatHL: '#4466DD',
+    outline: '#000000',
+    glow: 'rgba(255, 80, 80, 0.35)',
+    skinHL: '#FFFFFF'
   };
   const playerColors = {
-    skin: '#FFE0F0',
-    vest: '#2A1040',
-    shirt: '#D946A8',
-    pants: '#1A1A2E',
-    boots: '#7C3AED',
-    glove: '#F472B6',
-    watch: '#222222',
-    hair: '#1A1030',
-    hat: '#6D28D9',
-    outline: '#1A0030'
+    skin: '#FFD6F0',
+    vest: '#1A0A30',
+    shirt: '#FF2EC4',
+    shirtHL: '#FF6EDC',
+    pants: '#12122A',
+    boots: '#9333EA',
+    bootsHL: '#B366FF',
+    glove: '#FF5CBF',
+    gloveHL: '#FF8ED6',
+    watch: '#1A1A2A',
+    hair: '#140A28',
+    hat: '#7C2FD9',
+    hatHL: '#A066FF',
+    outline: '#0E0020',
+    glow: 'rgba(200, 50, 255, 0.3)',
+    skinHL: '#FFF0F8'
   };
   const ghostColors = {
     skin: '#667788',
     vest: '#334455',
     shirt: '#556677',
+    shirtHL: '#6B7D8E',
     pants: '#334455',
     boots: '#445566',
+    bootsHL: '#556677',
     glove: '#556677',
+    gloveHL: '#6B7D8E',
     watch: '#334455',
     hair: '#334455',
     hat: '#445566',
-    outline: '#223344'
+    hatHL: '#556677',
+    outline: '#223344',
+    glow: 'rgba(100, 120, 140, 0.15)',
+    skinHL: '#7A8E9E'
   };
   const colors = colorType === 'player' ? playerColors : colorType === 'ghost' ? ghostColors : targetColors;
 
-  // Draw a limb with thick outline
-  function drawLimb(x1, y1, x2, y2, width, color) {
+  // Draw a limb with thick outline and 3D highlight
+  function drawLimb(x1, y1, x2, y2, width, color, highlightColor) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    // Outer glow
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = colors.glow;
+    ctx.lineWidth = width + Math.round(14 * s);
+    ctx.stroke();
     // Black outer outline
     ctx.beginPath();
     ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
@@ -511,13 +535,28 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
     ctx.stroke();
+    // 3D highlight stripe (offset toward top-left)
+    if (highlightColor) {
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const nx = -dy / len, ny = dx / len;
+      const off = width * 0.18;
+      ctx.beginPath();
+      ctx.moveTo(x1 + nx * off, y1 + ny * off);
+      ctx.lineTo(x2 + nx * off, y2 + ny * off);
+      ctx.strokeStyle = highlightColor;
+      ctx.lineWidth = width * 0.3;
+      ctx.globalAlpha = 0.5;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
   }
 
   // --- 1. Stage spotlight (bottom glow) ---
   const footCX = cx * w, footCY = footY * h + Math.round(15 * s);
   const spotRx = Math.round(130 * s), spotRy = Math.round(30 * s);
   const spotGrad = ctx.createRadialGradient(footCX, footCY, 0, footCX, footCY, spotRx);
-  spotGrad.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+  spotGrad.addColorStop(0, colors.glow);
   spotGrad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.save();
   ctx.scale(1, spotRy / spotRx);
@@ -532,14 +571,14 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   const lFootX = lKneeX - Math.round(10 * s), rFootX = rKneeX + Math.round(10 * s);
 
   // Thighs and shins (black pants)
-  drawLimb(cx * w, hipY * h, lKneeX, kneeY * h, limbW + 6 * s, colors.pants);
-  drawLimb(cx * w, hipY * h, rKneeX, kneeY * h, limbW + 6 * s, colors.pants);
-  drawLimb(lKneeX, kneeY * h, lFootX, footY * h, limbW, colors.pants);
-  drawLimb(rKneeX, kneeY * h, rFootX, footY * h, limbW, colors.pants);
+  drawLimb(cx * w, hipY * h, lKneeX, kneeY * h, limbW + 6 * s, colors.pants, colors.pants);
+  drawLimb(cx * w, hipY * h, rKneeX, kneeY * h, limbW + 6 * s, colors.pants, colors.pants);
+  drawLimb(lKneeX, kneeY * h, lFootX, footY * h, limbW, colors.pants, colors.pants);
+  drawLimb(rKneeX, kneeY * h, rFootX, footY * h, limbW, colors.pants, colors.pants);
 
   // Blue boots
-  drawLimb(lFootX, footY * h - 20 * s, lFootX, footY * h, limbW + 4 * s, colors.boots);
-  drawLimb(rFootX, footY * h - 20 * s, rFootX, footY * h, limbW + 4 * s, colors.boots);
+  drawLimb(lFootX, footY * h - 20 * s, lFootX, footY * h, limbW + 4 * s, colors.boots, colors.bootsHL);
+  drawLimb(rFootX, footY * h - 20 * s, rFootX, footY * h, limbW + 4 * s, colors.boots, colors.bootsHL);
   // Soles (rounded)
   ctx.fillStyle = colors.outline;
   ctx.beginPath();
@@ -551,19 +590,33 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 
   // --- Neck (connects head to shoulders) ---
   const neckW = Math.round(18 * s);
-  drawLimb(headX, headCY + headR * 0.85, headX, shoulderY * h, neckW, colors.skin);
+  drawLimb(headX, headCY + headR * 0.85, headX, shoulderY * h, neckW, colors.skin, colors.skinHL);
 
   // --- 3. Torso (red shirt + black vest) ---
   const pad = Math.round(25 * s);
-  ctx.fillStyle = colors.shirt;
   ctx.strokeStyle = colors.outline;
   ctx.lineWidth = Math.round(6 * s);
 
-  // Red shirt base (rounded corners)
+  // Outer glow behind torso
+  ctx.save();
+  ctx.shadowColor = colors.glow;
+  ctx.shadowBlur = 18 * s;
+
+  // Red shirt base with vertical gradient for 3D depth
   const torsoR = Math.round(8 * s);
+  const torsoLeft = lShoulderX * w - pad;
+  const torsoTop = shoulderY * h;
+  const torsoW = (rShoulderX - lShoulderX) * w + 2 * pad;
+  const torsoH = (hipY - shoulderY) * h;
+  const shirtGrad = ctx.createLinearGradient(torsoLeft, torsoTop, torsoLeft, torsoTop + torsoH);
+  shirtGrad.addColorStop(0, colors.shirtHL);
+  shirtGrad.addColorStop(0.4, colors.shirt);
+  shirtGrad.addColorStop(1, colors.shirt);
+  ctx.fillStyle = shirtGrad;
   ctx.beginPath();
-  ctx.roundRect(lShoulderX * w - pad, shoulderY * h, (rShoulderX - lShoulderX) * w + 2 * pad, (hipY - shoulderY) * h, torsoR);
+  ctx.roundRect(torsoLeft, torsoTop, torsoW, torsoH, torsoR);
   ctx.fill(); ctx.stroke();
+  ctx.restore();
 
   // Black vest (two open flaps with rounded stroke corners)
   ctx.fillStyle = colors.vest;
@@ -592,8 +645,8 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   if (opts.lArm) {
     const elbowX = opts.lArm[0].x * w, elbowY = opts.lArm[0].y * h;
     const wristX = opts.lArm[1].x * w, wristY = opts.lArm[1].y * h;
-    drawLimb(lShoulderX * w, shoulderY * h, elbowX, elbowY, armW, colors.skin);
-    drawLimb(elbowX, elbowY, wristX, wristY, armW, colors.skin);
+    drawLimb(lShoulderX * w, shoulderY * h, elbowX, elbowY, armW, colors.skin, colors.skinHL);
+    drawLimb(elbowX, elbowY, wristX, wristY, armW, colors.skin, colors.skinHL);
 
     // Wristwatch
     const watchX = wristX - (wristX - elbowX) * 0.2;
@@ -610,13 +663,13 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   if (opts.rArm) {
     const elbowX = opts.rArm[0].x * w, elbowY = opts.rArm[0].y * h;
     const wristX = opts.rArm[1].x * w, wristY = opts.rArm[1].y * h;
-    drawLimb(rShoulderX * w, shoulderY * h, elbowX, elbowY, armW, colors.skin);
-    drawLimb(elbowX, elbowY, wristX, wristY, armW, colors.skin);
+    drawLimb(rShoulderX * w, shoulderY * h, elbowX, elbowY, armW, colors.skin, colors.skinHL);
+    drawLimb(elbowX, elbowY, wristX, wristY, armW, colors.skin, colors.skinHL);
 
     // Yellow glove
     const gloveStartX = wristX - (wristX - elbowX) * 0.3;
     const gloveStartY = wristY - (wristY - elbowY) * 0.3;
-    drawLimb(gloveStartX, gloveStartY, wristX, wristY, armW + 2 * s, colors.glove);
+    drawLimb(gloveStartX, gloveStartY, wristX, wristY, armW + 2 * s, colors.glove, colors.gloveHL);
 
     // Right palm (yellow)
     ctx.fillStyle = colors.glove; ctx.strokeStyle = colors.outline;
@@ -626,11 +679,25 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
 
   // --- 5. Head (hat, sunglasses, beard) ---
 
-  // Face base (white skin)
-  ctx.fillStyle = colors.skin; ctx.strokeStyle = colors.outline; ctx.lineWidth = Math.round(5 * s);
+  // Glow behind head
+  ctx.save();
+  ctx.shadowColor = colors.glow;
+  ctx.shadowBlur = 16 * s;
+
+  // Face base (skin with 3D radial gradient)
+  const faceGrad = ctx.createRadialGradient(
+    headX - headR * 0.2, headCY - headR * 0.2, headR * 0.1,
+    headX, headCY, headR * 1.1
+  );
+  faceGrad.addColorStop(0, colors.skinHL);
+  faceGrad.addColorStop(0.6, colors.skin);
+  faceGrad.addColorStop(1, colors.skin);
+  ctx.fillStyle = faceGrad;
+  ctx.strokeStyle = colors.outline; ctx.lineWidth = Math.round(5 * s);
   ctx.beginPath();
   ctx.ellipse(headX, headCY, headR * 0.9, headR * 1.1, 0, 0, Math.PI * 2);
   ctx.fill(); ctx.stroke();
+  ctx.restore();
 
   // Beard (lower face)
   ctx.fillStyle = colors.hair;
@@ -659,8 +726,12 @@ function drawStickFigure(ctx, w, h, opts = {}, colorType = 'idle') {
   ctx.strokeStyle = colors.watch; ctx.lineWidth = 4*s;
   ctx.beginPath(); ctx.moveTo(headX - 5*s, glassY + glassH/2); ctx.lineTo(headX + 5*s, glassY + glassH/2); ctx.stroke();
 
-  // Blue hat (rounded brim)
-  ctx.fillStyle = colors.hat; ctx.strokeStyle = colors.outline;
+  // Blue hat (rounded brim) with 3D gradient
+  const hatGrad = ctx.createLinearGradient(headX, headCY - headR * 1.2, headX, headCY - headR * 0.25);
+  hatGrad.addColorStop(0, colors.hatHL);
+  hatGrad.addColorStop(0.5, colors.hat);
+  hatGrad.addColorStop(1, colors.hat);
+  ctx.fillStyle = hatGrad; ctx.strokeStyle = colors.outline;
   ctx.lineJoin = 'round';
   ctx.beginPath();
   ctx.arc(headX, headCY - headR * 0.5, headR * 0.9, Math.PI, 0);
