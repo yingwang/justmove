@@ -34,7 +34,8 @@ body {
 /* ===== Start Screen ===== */
 #start-screen {
   background: linear-gradient(135deg, #0a0a2e 0%, #0a1a2e 50%, #0a1a3e 100%);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 #start-screen::before {
@@ -976,9 +977,20 @@ body {
 
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
-  .title-container h1 { font-size: 3rem; }
-  .song-list { grid-template-columns: repeat(2, 1fr); max-width: 340px; }
-  .song-btn { min-width: 0; }
+  #start-screen.active {
+    justify-content: flex-start;
+    padding: 1.5rem 1rem 2rem;
+  }
+  .title-container h1 { font-size: 2.5rem; }
+  .subtitle { font-size: 0.9rem; letter-spacing: 0.15em; }
+  .start-content { margin-top: 1rem; gap: 1rem; }
+  .camera-prompt { padding: 0.6rem 1rem; }
+  .camera-prompt p { font-size: 0.85rem; }
+  .song-list { grid-template-columns: repeat(2, 1fr); max-width: 340px; gap: 0.4rem; }
+  .song-btn { min-width: 0; padding: 0.5rem 0.6rem; }
+  .song-name { font-size: 0.85rem; }
+  .custom-audio-section { padding: 0.8rem 1rem; }
+  .btn-primary { padding: 0.8rem 2rem; font-size: 1.1rem; }
   #pose-target-container { width: 120px; height: 160px; right: 10px; bottom: 80px; }
   #beat-timeline { width: 90%; }
   .results-stats { grid-template-columns: repeat(2, 1fr); }
