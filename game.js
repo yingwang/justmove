@@ -2656,6 +2656,15 @@ if (audioUploadInput) {
   });
 }
 
+// Toggle custom audio section visibility
+const toggleCustomAudioBtn = document.getElementById('toggle-custom-audio');
+const customAudioSection = document.getElementById('custom-audio-section');
+if (toggleCustomAudioBtn && customAudioSection) {
+  toggleCustomAudioBtn.addEventListener('click', () => {
+    customAudioSection.classList.toggle('hidden');
+  });
+}
+
 const customDifficultySelect = document.getElementById('custom-difficulty');
 if (customDifficultySelect) {
   customDifficultySelect.addEventListener('change', (e) => {
