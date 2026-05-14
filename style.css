@@ -404,15 +404,24 @@ body {
 }
 
 #webcam {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0.001;
+  pointer-events: none;
+  z-index: -1;
+}
+
+#webcam.in-game {
   width: 100%;
   height: 100%;
+  opacity: 0.25;
   object-fit: cover;
   transform: scaleX(-1);
-  opacity: 0.25;
   filter: saturate(0.3) brightness(0.7);
+  z-index: 0;
 }
 
 #pose-canvas {
